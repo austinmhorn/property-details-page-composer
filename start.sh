@@ -1,24 +1,47 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/bash
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$ROOT_DIR"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
 
-PYTHON_BIN="${PYTHON_BIN:-python3}"
+PYTHON="${PYTHON:-/home/birchstonereporting/shared-venvs/data-engines/bin/python}"
+
+if [ ! -x "$PYTHON" ]; then
+    PYTHON="$(command -v python3)"
+fi
+
+LAST_RUN_FILE="$SCRIPT_DIR/last_run.json"
+
+START_TIME=$(date +%s)
+STARTED_AT=$(date -Iseconds 2>/dev/null || date +"%Y-%m-%dT%H:%M:%S%z")
+
+RUN_SOURCE="${RUN_SOURCE:-cron}"
 
 echo "===== PROPERTY DETAILS PAGE COMPOSER START ====="
 
-echo "→ Fetching latest property data from Notion"
-go run .
+"$PYTHON" "$SCRIPT_DIR/oversee_process.py"
+PY_EXIT=$?
 
-echo "→ Rendering portfolio HTML"
-"$PYTHON_BIN" scripts/render_portfolio.py
+END_TIME=$(date +%s)
+FINISHED_AT=$(date -Iseconds 2>/dev/null || date +"%Y-%m-%dT%H:%M:%S%z")
+DURATION=$((END_TIME - START_TIME))
 
-if [[ "${1:-}" == "--publish" ]]; then
-  echo "→ Publishing portfolio HTML to Interact"
-  "$PYTHON_BIN" scripts/publish_portfolio.py
+if [ "$PY_EXIT" -eq 0 ]; then
+    STATUS="success"
 else
-  echo "→ Preview only. Re-run with --publish to update Interact."
+    STATUS="failed"
 fi
 
+cat > "$LAST_RUN_FILE" <<EOF
+{
+  "status": "$STATUS",
+  "started_at": "$STARTED_AT",
+  "finished_at": "$FINISHED_AT",
+  "duration_seconds": $DURATION,
+  "run_source": "$RUN_SOURCE"
+}
+EOF
+
+echo "Python exit code: $PY_EXIT"
 echo "===== PROPERTY DETAILS PAGE COMPOSER COMPLETE ====="
+
+exit "$PY_EXIT"
