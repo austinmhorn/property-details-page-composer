@@ -1,5 +1,6 @@
 import argparse
 import sys
+import webbrowser
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,6 +23,7 @@ def main() -> None:
 
     print(f"✅ Previewed {prop.name}")
     print(f"   {output}")
+    webbrowser.open(output.resolve().as_uri())
 
 
 if __name__ == "__main__":
