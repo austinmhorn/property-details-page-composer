@@ -4,65 +4,102 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
-// Config structure for reading JSON file
-type Config struct {
-	NotionToken string `json:"notion_token"`
-	DatabaseID  string `json:"notion_database_id"`
-}
-
+// Runtime configuration is loaded from secrets/.env. Existing environment
+// variables take precedence, which keeps deployment flexible.
 var notionToken string
 var databaseID string
 var notionAPIURL string
-var apiResponseFilePath string = "json/api_response.json"
-var configFilePath string = "json/notion_config.json"
+var apiResponseFilePath string
 
 var client = &http.Client{Timeout: 120 * time.Second}
 
-// Load config.json
-func LoadConfig() error {
-	// ✅ Clear `api_response.json` at the start
-	if err := os.WriteFile(apiResponseFilePath, []byte("{}"), 0644); err != nil {
-		fmt.Println("❌ Failed to clear `api_response.json`:", err)
-	} else {
-		fmt.Println("🗑 Cleared `api_response.json` before fetching new data")
-	}
-
-	file, err := os.ReadFile(configFilePath)
+// ProjectRoot finds the repository root by walking upward until go.mod exists.
+func ProjectRoot() (string, error) {
+	dir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to read config.json: %w", err)
+		return "", err
 	}
 
-	var config Config
-	if err := json.Unmarshal(file, &config); err != nil {
-		return fmt.Errorf("failed to parse config.json: %w", err)
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", fmt.Errorf("could not locate project root (go.mod not found)")
+}
+
+func loadDotEnv(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
 	}
 
-	// Debugging: Print loaded values
-	//fmt.Println("🔍 DEBUG: Loaded Notion Token:", config.NotionToken)
-	//fmt.Println("🔍 DEBUG: Loaded Database ID:", config.DatabaseID)
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
 
-	// Ensure values are not empty
-	if config.NotionToken == "" {
-		return fmt.Errorf("notion_token is missing in config.json")
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.Trim(strings.TrimSpace(parts[1]), "\"'")
+		if key == "" {
+			continue
+		}
+
+		if _, exists := os.LookupEnv(key); !exists {
+			_ = os.Setenv(key, value)
+		}
 	}
-	if config.DatabaseID == "" {
-		return fmt.Errorf("notion_database_id is missing in config.json")
+	return nil
+}
+
+// LoadConfig loads Notion credentials from secrets/.env.
+func LoadConfig() error {
+	root, err := ProjectRoot()
+	if err != nil {
+		return err
 	}
 
-	// Set global variables
-	notionToken = config.NotionToken
-	databaseID = config.DatabaseID
+	envPath := filepath.Join(root, "secrets", ".env")
+	if err := loadDotEnv(envPath); err != nil {
+		return fmt.Errorf("failed to load %s: %w", envPath, err)
+	}
+
+	notionToken = strings.TrimSpace(os.Getenv("NOTION_TOKEN"))
+	databaseID = strings.TrimSpace(os.Getenv("NOTION_DATABASE_ID"))
+	if notionToken == "" {
+		return fmt.Errorf("NOTION_TOKEN is missing from secrets/.env")
+	}
+	if databaseID == "" {
+		return fmt.Errorf("NOTION_DATABASE_ID is missing from secrets/.env")
+	}
+
 	notionAPIURL = "https://api.notion.com/v1/databases/" + databaseID + "/query"
+	apiResponseFilePath = filepath.Join(root, "json", "api_response.json")
 
-	fmt.Println("🔍 DEBUG: Notion API URL:", notionAPIURL)
-	fmt.Println("✅ Config loaded successfully!")
+	if err := os.MkdirAll(filepath.Dir(apiResponseFilePath), 0755); err != nil {
+		return fmt.Errorf("failed to create json directory: %w", err)
+	}
+
+	fmt.Println("✅ Notion configuration loaded successfully")
 	return nil
 }
 
@@ -73,19 +110,20 @@ func FetchNotionData() ([]map[string]interface{}, error) {
 	startCursor := ""
 
 	for hasMore {
-		payload := map[string]interface{}{
-			"page_size": 100,
-		}
+		payload := map[string]interface{}{"page_size": 100}
 		if startCursor != "" {
 			payload["start_cursor"] = startCursor
 		}
 
-		payloadBytes, _ := json.Marshal(payload)
+		payloadBytes, err := json.Marshal(payload)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encode Notion request: %w", err)
+		}
+
 		req, err := http.NewRequest("POST", notionAPIURL, bytes.NewReader(payloadBytes))
 		if err != nil {
 			return nil, err
 		}
-
 		req.Header.Set("Authorization", "Bearer "+notionToken)
 		req.Header.Set("Notion-Version", "2022-06-28")
 		req.Header.Set("Content-Type", "application/json")
@@ -94,25 +132,14 @@ func FetchNotionData() ([]map[string]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
+		body, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			return nil, readErr
 		}
 
-		// ✅ Format JSON before saving
-		var formattedJSON bytes.Buffer
-		if err := json.Indent(&formattedJSON, body, "", "    "); err != nil {
-			fmt.Println("❌ Failed to format JSON:", err)
-			return nil, err
-		}
-
-		// ✅ Write formatted API response to `api_response.json`
-		if err := os.WriteFile(apiResponseFilePath, formattedJSON.Bytes(), 0644); err != nil {
-			fmt.Println("❌ Failed to write API response to file:", err)
-		} else {
-			fmt.Println("📁 API response saved and formatted in `api_response.json`")
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return nil, fmt.Errorf("Notion API returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 		}
 
 		var result map[string]interface{}
@@ -128,20 +155,31 @@ func FetchNotionData() ([]map[string]interface{}, error) {
 			}
 		}
 
-		// ✅ Safe type assertion for "has_more"
 		if hasMoreVal, ok := result["has_more"].(bool); ok {
 			hasMore = hasMoreVal
 		} else {
 			hasMore = false
 		}
 
-		// ✅ Safe check for "next_cursor"
 		if nextCursor, ok := result["next_cursor"].(string); ok {
 			startCursor = nextCursor
 		} else {
 			startCursor = ""
 		}
 	}
+
+	debugPayload := map[string]interface{}{
+		"count": len(allData),
+		"results": allData,
+	}
+	formattedJSON, err := json.MarshalIndent(debugPayload, "", "    ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to format combined Notion response: %w", err)
+	}
+	if err := os.WriteFile(apiResponseFilePath, formattedJSON, 0644); err != nil {
+		return nil, fmt.Errorf("failed to write API response file: %w", err)
+	}
+	fmt.Printf("📁 Combined Notion API response saved to %s\n", apiResponseFilePath)
 
 	return allData, nil
 }
@@ -551,7 +589,7 @@ func FetchTitleFromPageID(pageID string) string {
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
