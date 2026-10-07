@@ -86,6 +86,15 @@ def _slugify(value: str) -> str:
     return slug or "property"
 
 
+def _external_url(value: str) -> str:
+    value = _clean(value)
+    if not value:
+        return ""
+    if value.lower().startswith(("http://", "https://")):
+        return value
+    return f"https://{value}"
+
+
 def _kind(label: str, value: str) -> str:
     lowered = value.lower()
     if lowered.startswith(("http://", "https://")):
@@ -130,7 +139,7 @@ class Property:
             ("PEP", "PEP Page"),
         ]
         return [
-            {"label": display, "url": self.get(column)}
+            {"label": display, "url": _external_url(self.get(column))}
             for display, column in labels
             if self.get(column)
         ]
