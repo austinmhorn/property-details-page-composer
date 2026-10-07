@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -132,11 +133,36 @@ def validate_field(name: str, registry_type: str, schema: dict | None = None) ->
     }
 
 
+def core_headers() -> set[str]:
+    source = (PROJECT_DIR / "main.go").read_text(encoding="utf-8")
+    marker = "headers := []string{"
+    start = source.find(marker)
+
+    if start < 0:
+        raise RuntimeError("Unable to locate the core CSV header definition in main.go.")
+
+    block = source[start + len(marker):]
+    end = block.find("\n\t}")
+    if end < 0:
+        raise RuntimeError("Unable to parse the core CSV header definition in main.go.")
+
+    return {
+        value.casefold()
+        for value in re.findall(r'"([^"]+)"', block[:end])
+    }
+
+
 def add_field(name: str, registry_type: str) -> dict:
     registry = load_registry()
+    normalized_name = name.strip().casefold()
+
+    if normalized_name in core_headers():
+        raise ValueError(
+            f'"{name.strip()}" is already part of the core Property Details export.'
+        )
 
     for field in registry["fields"]:
-        if str(field.get("header", "")).casefold() == name.strip().casefold():
+        if str(field.get("header", "")).casefold() == normalized_name:
             raise ValueError(f'"{name.strip()}" is already registered.')
 
     validation = validate_field(name, registry_type)
