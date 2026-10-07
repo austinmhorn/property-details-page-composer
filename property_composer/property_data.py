@@ -8,9 +8,21 @@ from pathlib import Path
 from .config import DATA_FILE
 
 
+SENSITIVE_FIELDS = {
+    "Property #",
+    "Prop No",
+    "PMS ID",
+    "Asset Status",
+    "Payroll ID",
+    "Maximum Allowed Employee Discount Units",
+    "EIN",
+    "Owning Entity",
+    "Exec. Report Due Date",
+}
+
 SECTION_FIELDS: dict[str, list[str]] = {
     "Quick Facts": [
-        "Asset Status", "Prop No", "PMS ID", "Payroll ID", "Units", "Year Built",
+        "Units", "Year Built",
         "Building Class", "Property Type", "Business Type", "Priority Group",
         "Groups", "Submarket", "Metro", "County",
     ],
@@ -18,7 +30,7 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Income Req.", "Late Fee Max", "Lease Terms", "Cares Act / Days to File",
         "Resident Referral Maximum", "Unit Hold Times", "Units Displayed",
         "Deposit Alt", "Get 100", "Housing Units / Max Limit Set",
-        "Maximum Allowed Employee Discount Units", "Reno Status",
+        "Reno Status",
         "Renovation Strategy & Online Leasing Display", "Special Note",
     ],
     "Property Team": [
@@ -55,8 +67,7 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Stories", "Parking Spaces",
     ],
     "Administrative Details": [
-        "EIN", "Owning Entity", "Acquisition Date", "Years Under Management",
-        "Exec. Report Due Date", "Dispo Date",
+        "Acquisition Date", "Years Under Management", "Dispo Date",
     ],
 }
 
@@ -125,7 +136,7 @@ class Property:
         ]
 
     def sections(self) -> list[dict[str, object]]:
-        used = {"Property Name"}
+        used = {"Property Name"} | SENSITIVE_FIELDS
         sections: list[dict[str, object]] = []
 
         for section_name, labels in SECTION_FIELDS.items():
