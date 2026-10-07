@@ -151,6 +151,7 @@ func main() {
 		"Service Manager Email",
 		"Website Tracking Email",
 		"Website Tracking Number",
+		"Collateral Email",
 		"Customer Service Email",
 		"Property Manager",
 		"PetScreening",
