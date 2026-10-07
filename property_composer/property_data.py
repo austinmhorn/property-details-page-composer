@@ -96,6 +96,17 @@ def _external_url(value: str) -> str:
     return f"https://{value}"
 
 
+def _include_property_name(name: str) -> bool:
+    normalized = _clean(name).casefold()
+    if not normalized:
+        return False
+    if normalized.startswith(("x_", "z_")):
+        return False
+    if normalized == "corporate office":
+        return False
+    return True
+
+
 def _kind(label: str, value: str) -> str:
     lowered = value.lower()
     if lowered.startswith(("http://", "https://")):
@@ -195,7 +206,8 @@ def load_properties(csv_path: Path | str = DATA_FILE) -> list[Property]:
 
         for row in reader:
             cleaned = {key: _clean(value) for key, value in row.items() if key}
-            if cleaned.get("Property Name"):
+            property_name = cleaned.get("Property Name", "")
+            if _include_property_name(property_name):
                 properties.append(Property(cleaned))
 
     properties.sort(key=lambda item: item.name.casefold())
