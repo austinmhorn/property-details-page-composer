@@ -4,11 +4,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"property-details-page-composer/notionapi" // Matches `go.mod`
+	"path/filepath"
+	"property-details-page-composer/notionapi"
 	"time"
 )
 
-var outputFile string = "data/notion_data_unsorted.csv"
 
 func writeLastUpdated() {
 	// Get current timestamp
@@ -33,8 +33,20 @@ func writeLastUpdated() {
 
 // Main function
 func main() {
-	// Load configuration first
-	err := notionapi.LoadConfig()
+	projectRoot, err := notionapi.ProjectRoot()
+	if err != nil {
+		fmt.Println("❌ Error locating project root:", err)
+		return
+	}
+
+	outputFile := filepath.Join(projectRoot, "data", "notion_data_unsorted.csv")
+	if err := os.MkdirAll(filepath.Dir(outputFile), 0755); err != nil {
+		fmt.Println("❌ Error creating data directory:", err)
+		return
+	}
+
+	// Load configuration first.
+	err = notionapi.LoadConfig()
 	if err != nil {
 		fmt.Println("❌ Error loading config:", err)
 		return
@@ -394,6 +406,12 @@ func main() {
 
 		// Print progress
 		fmt.Printf("📊 Progress: %d/%d (%.2f%%)\n", i+1, totalEntries, float64(i+1)/float64(totalEntries)*100)
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		fmt.Println("❌ ERROR: Writing CSV:", err)
+		return
 	}
 
 	fmt.Printf("✅ Data successfully written to %s!\n", csvFileName)
