@@ -22,7 +22,7 @@
       class="property-record"
       data-property-record="{{ property.key }}"
       data-property-name="{{ property.name }}"
-      {% if property.key != selected_key %}hidden{% endif %}
+      data-property-active="{% if property.key == selected_key %}true{% else %}false{% endif %}"
     >
       <header class="property-record__hero">
         <div>
