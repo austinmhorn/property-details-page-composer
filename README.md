@@ -56,6 +56,19 @@ python3 scripts/render_portfolio.py
 
 Generated HTML is written under `output/` and is intentionally ignored by Git.
 
+Local preview files automatically load the shared development assets from:
+
+- `assets/property-details.css`
+- `assets/property-details.js`
+
+`preview_property.py` opens the generated file automatically. To open the full 46-property portfolio after rendering:
+
+```bash
+python3 scripts/render_portfolio.py --open
+```
+
+The CSS and JavaScript in `assets/` are intentionally written so we can later move them nearly verbatim into Interact Masterpage CSS/JS. They are **not** included in the HTML fragment published through Page Composer.
+
 ## Publishing
 
 Publishing is explicit:
@@ -126,7 +139,7 @@ Masterpage CSS can then target the structural classes already emitted by the tem
 - `.property-section`
 - `.property-detail-grid`
 
-The generated HTML intentionally contains no styling or application JavaScript. Interact owns presentation and behavior; Python owns data and semantic markup.
+The Page Composer HTML fragment intentionally contains no embedded styling or application JavaScript. During local development, the preview wrapper links to the files in `assets/`. When the design is approved, those same assets become the starting point for the Interact Masterpage CSS/JS. Python continues to own only the data and semantic markup.
 
 ## Data behavior
 
