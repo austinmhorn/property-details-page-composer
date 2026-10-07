@@ -35,8 +35,25 @@ def render_portfolio(
     )
 
 
-def write_preview(html: str, filename: str = "portfolio_details.html") -> Path:
+def render_preview_document(
+    html: str,
+    *,
+    title: str = "Property Details Preview",
+) -> str:
+    template = _environment().get_template("preview_document.html")
+    return template.render(title=title, content=html)
+
+
+def write_preview(
+    html: str,
+    filename: str = "portfolio_details.html",
+    *,
+    title: str = "Property Details Preview",
+) -> Path:
     ensure_runtime_dirs()
     output_path = OUTPUT_DIR / filename
-    output_path.write_text(html, encoding="utf-8")
+    output_path.write_text(
+        render_preview_document(html, title=title),
+        encoding="utf-8",
+    )
     return output_path
