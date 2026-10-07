@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-
 func writeLastUpdated() {
 	// Get current timestamp
 	timestamp := time.Now().Format("01/02/2006 - 15:04:05")
@@ -265,6 +264,7 @@ func main() {
 		serviceManagerEmailStr := notionapi.GetCleanEmailValue(props, "Service Manager Email")
 		websiteTrackingEmailStr := notionapi.GetCleanEmailValue(props, "Website Tracking Email")
 		websiteTrackingNumberStr := notionapi.GetPhoneNumberValue(props, "Website Tracking Number")
+		collateralEmailStr := notionapi.GetCleanEmailValue(props, "Collateral Email")
 		customerServiceEmailStr := notionapi.GetCleanEmailValue(props, "Customer Service Email")
 		propertyManagerStr := notionapi.GetFormulaTextValue(props, "Property Manager (As Text)")
 		petScreeningStr := notionapi.GetPlainTextValue(props, "PetScreening")
@@ -369,6 +369,7 @@ func main() {
 			serviceManagerEmailStr,
 			websiteTrackingEmailStr,
 			websiteTrackingNumberStr,
+			collateralEmailStr,
 			customerServiceEmailStr,
 			propertyManagerStr,
 			petScreeningStr,
