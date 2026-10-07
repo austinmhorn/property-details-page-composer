@@ -18,7 +18,7 @@ RUN_SOURCE="${RUN_SOURCE:-cron}"
 
 echo "===== PROPERTY DETAILS PAGE COMPOSER START ====="
 
-"$PYTHON" "$SCRIPT_DIR/oversee_process.py"
+"$PYTHON" "$SCRIPT_DIR/scripts/oversee_process.py"
 PY_EXIT=$?
 
 END_TIME=$(date +%s)
