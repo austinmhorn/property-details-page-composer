@@ -604,3 +604,40 @@ func FetchTitleFromPageID(pageID string) string {
 
 	return ""
 }
+
+
+// GetValueByType extracts a property value using a registry-safe type name.
+func GetValueByType(props map[string]interface{}, key string, valueType string) (string, error) {
+	switch strings.TrimSpace(valueType) {
+	case "rich_text":
+		return GetPlainTextValue(props, key), nil
+	case "number":
+		return GetFloatValue(props, key), nil
+	case "integer":
+		return GetIntValue(props, key), nil
+	case "select":
+		return GetSelectValue(props, key), nil
+	case "multi_select":
+		return strings.Join(GetMultiSelectStrings(props, key), ", "), nil
+	case "status":
+		return GetStatus(props, key), nil
+	case "date":
+		return GetDateValue(props, key), nil
+	case "url":
+		return GetCleanURL(props, key), nil
+	case "email":
+		return GetCleanEmailValue(props, key), nil
+	case "phone_number":
+		return GetPhoneNumberValue(props, key), nil
+	case "formula_string":
+		return GetFormulaTextValue(props, key), nil
+	case "formula_number":
+		return fmt.Sprintf("%.2f", GetFormulaNumberValue(props, key)), nil
+	case "rollup_text":
+		return strings.Join(GetRollupPlainText(props, key), ", "), nil
+	case "rollup_formula_string":
+		return GetRollupFormulaString(props, key), nil
+	default:
+		return "", fmt.Errorf("unsupported registry field type %q", valueType)
+	}
+}
