@@ -4,7 +4,8 @@ import sys
 from pathlib import Path
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = SCRIPT_DIR.parent
 GO_BIN = Path("/usr/local/go/bin/go")
 
 
