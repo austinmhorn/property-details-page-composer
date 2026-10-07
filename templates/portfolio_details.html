@@ -31,13 +31,6 @@
           <p class="property-record__address">{{ property.full_address }}</p>
           {% endif %}
         </div>
-
-        <dl class="property-record__headline-facts">
-          {% if property.get("Units") %}
-          <div><dt>Units</dt><dd>{{ property.get("Units") }}</dd></div>
-          {% endif %}
-
-        </dl>
       </header>
 
       {% set links = property.quick_links() %}
