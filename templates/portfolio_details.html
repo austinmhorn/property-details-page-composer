@@ -1,0 +1,88 @@
+<main class="property-details-app" data-property-details-app>
+  <header class="property-details-toolbar">
+    <div class="property-details-toolbar__intro">
+      <p class="property-details-toolbar__eyebrow">Birchstone Residential</p>
+      <h1>{{ page_title }}</h1>
+      <p>Select a property to view its operational details, contacts, links, policies, and systems information.</p>
+    </div>
+
+    <div class="property-details-selector-wrap">
+      <label for="property-details-selector">Property</label>
+      <select id="property-details-selector" class="property-details-selector" data-property-selector>
+        {% for property in properties %}
+        <option value="{{ property.key }}"{% if property.key == selected_key %} selected{% endif %}>{{ property.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </header>
+
+  <div class="property-details-records">
+    {% for property in properties %}
+    <article
+      class="property-record"
+      data-property-record="{{ property.key }}"
+      data-property-name="{{ property.name }}"
+      {% if property.key != selected_key %}hidden{% endif %}
+    >
+      <header class="property-record__hero">
+        <div>
+          {% if property.get("Asset Status") %}
+          <p class="property-record__status">{{ property.get("Asset Status") }}</p>
+          {% endif %}
+          <h2>{{ property.name }}</h2>
+          {% if property.full_address %}
+          <p class="property-record__address">{{ property.full_address }}</p>
+          {% endif %}
+        </div>
+
+        <dl class="property-record__headline-facts">
+          {% if property.get("Units") %}
+          <div><dt>Units</dt><dd>{{ property.get("Units") }}</dd></div>
+          {% endif %}
+          {% if property.get("Prop No") %}
+          <div><dt>Property #</dt><dd>{{ property.get("Prop No") }}</dd></div>
+          {% endif %}
+          {% if property.get("PMS ID") %}
+          <div><dt>PMS ID</dt><dd>{{ property.get("PMS ID") }}</dd></div>
+          {% endif %}
+        </dl>
+      </header>
+
+      {% set links = property.quick_links() %}
+      {% if links %}
+      <nav class="property-quick-links" aria-label="{{ property.name }} quick links">
+        {% for link in links %}
+        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }}</a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+
+      <div class="property-sections">
+        {% for section in property.sections() %}
+        <section class="property-section">
+          <h3>{{ section.name }}</h3>
+          <dl class="property-detail-grid">
+            {% for detail in section.details %}
+            <div class="property-detail">
+              <dt>{{ detail.label }}</dt>
+              <dd>
+                {% if detail.kind == "url" %}
+                <a href="{{ detail.value }}" target="_blank" rel="noopener noreferrer">{{ detail.value }}</a>
+                {% elif detail.kind == "email" %}
+                <a href="mailto:{{ detail.value }}">{{ detail.value }}</a>
+                {% elif detail.kind == "phone" %}
+                <a href="tel:{{ detail.value|replace(' ', '') }}">{{ detail.value }}</a>
+                {% else %}
+                {{ detail.value }}
+                {% endif %}
+              </dd>
+            </div>
+            {% endfor %}
+          </dl>
+        </section>
+        {% endfor %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</main>
