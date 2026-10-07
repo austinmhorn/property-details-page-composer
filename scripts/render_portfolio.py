@@ -1,5 +1,6 @@
 import argparse
 import sys
+import webbrowser
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,6 +16,7 @@ def main() -> None:
         description="Render all property records into one Interact-ready HTML page."
     )
     parser.add_argument("--selected", help="Property name or property number to show by default.")
+    parser.add_argument("--open", action="store_true", help="Open the rendered portfolio in the default browser.")
     args = parser.parse_args()
 
     properties = load_properties()
@@ -23,6 +25,8 @@ def main() -> None:
     html = render_portfolio(properties, selected_key=selected_key)
     output = write_preview(html)
     print(f"✅ Rendered {len(properties)} properties to {output}")
+    if args.open:
+        webbrowser.open(output.resolve().as_uri())
 
 
 if __name__ == "__main__":
