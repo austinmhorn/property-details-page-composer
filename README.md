@@ -34,13 +34,46 @@ pip install -r requirements.txt
 
 The same `secrets/.env` stores both Interact and Notion configuration.
 
-## Local workflow
+## Runtime workflow
 
-Fetch Notion data and render the full portfolio:
+`start.sh` is the production/portal entrypoint. It calls `oversee_process.py`, which is the true workflow orchestrator.
+
+```text
+start.sh
+   ↓
+oversee_process.py
+   ├── go run .
+   │      ↓
+   │   fetch Notion property data
+   │      ↓
+   │   data/notion_data_unsorted.csv
+   │
+   └── scripts/publish_portfolio.py
+          ↓
+       render portfolio HTML
+          ↓
+       publish to Interact
+```
+
+`start.sh` also writes `last_run.json` with status, timestamps, duration, and `RUN_SOURCE`, matching the runtime pattern used by the other Birchstone data engines.
+
+On the Birchstone Portal VM it prefers the shared Python environment:
+
+```text
+/home/birchstonereporting/shared-venvs/data-engines/bin/python
+```
+
+For local development, it falls back to the available `python3`.
+
+Running:
 
 ```bash
 ./start.sh
 ```
+
+now performs the full production workflow and publishes the Property Details page to the Interact page configured by `INTERACT_PAGE_ID`.
+
+## Development workflow
 
 Preview one property while developing the information architecture:
 
@@ -71,17 +104,19 @@ The CSS and JavaScript in `assets/` are intentionally written so we can later mo
 
 ## Publishing
 
-Publishing is explicit:
+The production entrypoint publishes automatically:
 
 ```bash
-./start.sh --publish
+./start.sh
 ```
 
-or:
+For a direct/manual publish without running the Go fetch first:
 
 ```bash
 python3 scripts/publish_portfolio.py --page-id 1234
 ```
+
+For preview-only work, use `scripts/render_portfolio.py` or `scripts/preview_property.py` instead of `start.sh`.
 
 The destination should be a pure HTML Page Composer page, not a Block Editor page. The publisher refuses to overwrite a Block Editor page.
 
