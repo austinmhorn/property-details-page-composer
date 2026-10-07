@@ -36,12 +36,12 @@ The same `secrets/.env` stores both Interact and Notion configuration.
 
 ## Runtime workflow
 
-`start.sh` is the production/portal entrypoint. It calls `oversee_process.py`, which is the true workflow orchestrator.
+`start.sh` is the production/portal entrypoint. It calls `scripts/oversee_process.py`, which is the true workflow orchestrator.
 
 ```text
 start.sh
    ↓
-oversee_process.py
+scripts/oversee_process.py
    ├── go run .
    │      ↓
    │   fetch Notion property data
