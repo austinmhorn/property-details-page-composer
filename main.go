@@ -260,13 +260,13 @@ func main() {
 		depositAltStr := notionapi.GetSelectValue(props, "Deposit Alt")
 		get100Str := notionapi.GetSelectValue(props, "Get 100")
 		revManagementStr := notionapi.GetPlainTextValue(props, "Rev Management")
-		teamSizeStr := notionapi.GetIntValue(props, "Team Size | Office & Maint.")
 		pmEmailStr := notionapi.GetCleanEmailValue(props, "PM Email")
 		apmEmailStr := notionapi.GetCleanEmailValue(props, "APM Email")
 		leasingEmailStr := notionapi.GetCleanEmailValue(props, "Leasing Email")
 		serviceManagerEmailStr := notionapi.GetCleanEmailValue(props, "Service Manager Email")
 		websiteTrackingEmailStr := notionapi.GetCleanEmailValue(props, "Website Tracking Email")
 		websiteTrackingNumberStr := notionapi.GetPhoneNumberValue(props, "Website Tracking Number")
+		collateralEmailStr := notionapi.GetCleanEmailValue(props, "Collateral Email")
 		customerServiceEmailStr := notionapi.GetCleanEmailValue(props, "Customer Service Email")
 		propertyManagerStr := notionapi.GetFormulaTextValue(props, "Property Manager (As Text)")
 		petScreeningStr := notionapi.GetPlainTextValue(props, "PetScreening")
@@ -365,13 +365,13 @@ func main() {
 			depositAltStr,
 			get100Str,
 			revManagementStr,
-			teamSizeStr,
 			pmEmailStr,
 			apmEmailStr,
 			leasingEmailStr,
 			serviceManagerEmailStr,
 			websiteTrackingEmailStr,
 			websiteTrackingNumberStr,
+			collateralEmailStr,
 			customerServiceEmailStr,
 			propertyManagerStr,
 			petScreeningStr,
