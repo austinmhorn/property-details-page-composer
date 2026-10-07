@@ -26,9 +26,6 @@
     >
       <header class="property-record__hero">
         <div>
-          {% if property.get("Asset Status") %}
-          <p class="property-record__status">{{ property.get("Asset Status") }}</p>
-          {% endif %}
           <h2>{{ property.name }}</h2>
           {% if property.full_address %}
           <p class="property-record__address">{{ property.full_address }}</p>
@@ -39,12 +36,7 @@
           {% if property.get("Units") %}
           <div><dt>Units</dt><dd>{{ property.get("Units") }}</dd></div>
           {% endif %}
-          {% if property.get("Prop No") %}
-          <div><dt>Property #</dt><dd>{{ property.get("Prop No") }}</dd></div>
-          {% endif %}
-          {% if property.get("PMS ID") %}
-          <div><dt>PMS ID</dt><dd>{{ property.get("PMS ID") }}</dd></div>
-          {% endif %}
+
         </dl>
       </header>
 
