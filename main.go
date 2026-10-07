@@ -51,6 +51,14 @@ func main() {
 		return
 	}
 
+	fieldRegistry, err := loadFieldRegistry(projectRoot)
+	if err != nil {
+		fmt.Println("❌ Error loading property field registry:", err)
+		return
+	}
+
+	fmt.Printf("🧩 Loaded %d self-service property field(s).\n", len(fieldRegistry.Fields))
+
 	fmt.Println("🚀 Fetching Notion Data...")
 	data, err := notionapi.FetchNotionData()
 	if err != nil {
@@ -182,6 +190,19 @@ func main() {
 		"PEP Page",
 		"Website Design Template",
 	}
+
+	existingHeaders := make(map[string]bool, len(headers))
+	for _, header := range headers {
+		existingHeaders[header] = true
+	}
+	for _, field := range fieldRegistry.Fields {
+		if existingHeaders[field.Header] {
+			fmt.Printf("❌ Registry field %q duplicates an existing CSV header.\n", field.Header)
+			return
+		}
+	}
+
+	headers = append(headers, registryHeaders(fieldRegistry)...)
 	writer.Write(headers)
 
 	// Process each entry
@@ -401,6 +422,14 @@ func main() {
 			pepPageStr,
 			websiteDesignTemplateStr,
 		}
+
+		registryRow, err := registryValues(fieldRegistry, props)
+		if err != nil {
+			fmt.Printf("❌ Error extracting self-service fields for %s: %v\n", nameStr, err)
+			return
+		}
+
+		row = append(row, registryRow...)
 		writer.Write(row)
 
 		// Print progress
