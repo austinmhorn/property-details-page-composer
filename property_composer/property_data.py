@@ -18,12 +18,13 @@ SENSITIVE_FIELDS = {
     "EIN",
     "Owning Entity",
     "Exec. Report Due Date",
+    "Priority Group",
 }
 
 SECTION_FIELDS: dict[str, list[str]] = {
     "Quick Facts": [
         "Units", "Year Built",
-        "Building Class", "Property Type", "Business Type", "Priority Group",
+        "Building Class", "Property Type", "Business Type",
         "Groups", "Submarket", "Metro", "County",
     ],
     "Leasing & Policies": [
