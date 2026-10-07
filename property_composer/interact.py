@@ -57,6 +57,72 @@ class InteractClient:
         response.raise_for_status()
         return response.json()
 
+    def create_html_page(
+        self,
+        *,
+        title: str,
+        summary: str,
+        html: str,
+        category_ids: list[int],
+        top_section_ids: list[int],
+        keywords: list[str] | None = None,
+        message: str = "Created by Property Details Page Composer",
+    ) -> dict[str, Any]:
+        from datetime import datetime, timedelta, timezone
+
+        now = datetime.now(timezone.utc)
+        payload = {
+            "Transition": {
+                "State": "Published",
+                "Message": message,
+                "SendNotifications": False,
+                "ResendMentions": False,
+            },
+            "Page": {
+                "AuthorId": int(self.person_id),
+                "PublishAsId": int(self.person_id),
+                "PublisherType": 0,
+                "CategoryIds": category_ids,
+                "TopSectionIds": top_section_ids,
+                "TagIds": [],
+                "Keywords": keywords or [],
+                "ContentType": "html",
+                "Title": title,
+                "Summary": summary,
+                "Content": {"Html": html},
+                "Features": {
+                    "DefaultToFullWidth": True,
+                    "AllowComments": False,
+                    "IsKeyPage": False,
+                    "Recommends": {"Show": False, "MaxContentAge": 7},
+                    "IsMandatoryRead": False,
+                    "ShowTimeToRead": False,
+                    "ShowPublishedDate": False,
+                    "ShowUpdatedDate": False,
+                },
+                "Audience": {
+                    "RelatedContent": [],
+                    "NotificationRecipients": [],
+                },
+                "PubStartDate": now.isoformat(),
+                "PubEndDate": (now + timedelta(days=3650)).isoformat(),
+                "ReviewDate": (now + timedelta(days=365)).isoformat(),
+                "IsPublic": False,
+                "IsDiscoverable": True,
+                "IsBlockEditorPage": False,
+            },
+        }
+
+        headers = self._headers() | {"Content-Type": "application/json"}
+        response = self.session.post(
+            f"{self.api_domain}/api/page/composer",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+
     @staticmethod
     def _tag_ids(page: dict[str, Any]) -> list[Any]:
         values = []
