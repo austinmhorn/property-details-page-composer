@@ -89,7 +89,8 @@ Put this in Interact Masterpage JavaScript:
 
   const showProperty = (key) => {
     records.forEach((record) => {
-      record.hidden = record.dataset.propertyRecord !== key;
+      record.dataset.propertyActive =
+        record.dataset.propertyRecord === key ? "true" : "false";
     });
     localStorage.setItem("birchstone-property-details-selection", key);
   };
@@ -107,7 +108,15 @@ Put this in Interact Masterpage JavaScript:
 })();
 ```
 
-Masterpage CSS can target the structural classes already emitted by the template:
+Add this baseline rule to Interact Masterpage CSS so only the active property is visible while every property's text remains in the source HTML for indexing:
+
+```css
+.property-record[data-property-active="false"] {
+  display: none;
+}
+```
+
+Masterpage CSS can then target the structural classes already emitted by the template:
 
 - `.property-details-app`
 - `.property-details-toolbar`
