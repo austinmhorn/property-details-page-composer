@@ -116,6 +116,9 @@ def load_interact_field_metadata(
 
         managed_headers.add(header)
 
+        if header in SENSITIVE_FIELDS:
+            continue
+
         if item.get("display_in_interact") is not True:
             continue
 
