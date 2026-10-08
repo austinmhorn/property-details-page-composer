@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import csv
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from .config import DATA_FILE
+from .config import DATA_FILE, FIELD_METADATA_FILE
 
 
 SENSITIVE_FIELDS = {
@@ -71,6 +72,73 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Acquisition Date", "Years Under Management", "Dispo Date",
     ],
 }
+
+@dataclass(slots=True)
+class InteractField:
+    csv_header: str
+    category: str
+    label: str
+    order: int = 0
+
+
+def load_interact_field_metadata(
+    metadata_path: Path | str = FIELD_METADATA_FILE,
+) -> tuple[dict[str, InteractField], set[str]]:
+    path = Path(metadata_path)
+
+    if not path.exists():
+        return {}, set()
+
+    with path.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+
+    if payload.get("version") != 1:
+        raise RuntimeError(
+            f"Unsupported property field metadata version in {path}"
+        )
+
+    fields = payload.get("fields")
+    if not isinstance(fields, list):
+        raise RuntimeError(
+            f"Property field metadata has no fields list: {path}"
+        )
+
+    visible: dict[str, InteractField] = {}
+    managed_headers: set[str] = set()
+
+    for item in fields:
+        if not isinstance(item, dict):
+            continue
+
+        header = _clean(item.get("csv_header"))
+        if not header:
+            continue
+
+        managed_headers.add(header)
+
+        if item.get("display_in_interact") is not True:
+            continue
+
+        category = _clean(item.get("interact_category"))
+        label = _clean(item.get("interact_label")) or header
+
+        if not category:
+            category = "Additional Details"
+
+        try:
+            order = int(item.get("interact_order") or 0)
+        except (TypeError, ValueError):
+            order = 0
+
+        visible[header] = InteractField(
+            csv_header=header,
+            category=category,
+            label=label,
+            order=order,
+        )
+
+    return visible, managed_headers
+
 
 
 def _clean(value: str | None) -> str:
@@ -156,37 +224,122 @@ class Property:
             if self.get(column)
         ]
 
-    def sections(self) -> list[dict[str, object]]:
-        used = {"Property Name"} | SENSITIVE_FIELDS
-        sections: list[dict[str, object]] = []
+    def sections(
+        self,
+        interact_fields: dict[str, InteractField] | None = None,
+        managed_headers: set[str] | None = None,
+    ) -> list[dict[str, object]]:
+        interact_fields = interact_fields or {}
+        managed_headers = managed_headers or set()
+
+        used = {"Property Name"} | SENSITIVE_FIELDS | managed_headers
+        section_details: dict[str, list[dict[str, object]]] = {}
 
         for section_name, labels in SECTION_FIELDS.items():
-            details = []
+            details: list[dict[str, object]] = []
+
             for label in labels:
                 used.add(label)
                 value = self.get(label)
+
                 if value:
                     details.append({
                         "label": label,
                         "value": value,
                         "kind": _kind(label, value),
                     })
-            if details:
-                sections.append({"name": section_name, "details": details})
 
-        additional = []
+            section_details[section_name] = details
+
+        dynamic_by_category: dict[str, list[tuple[int, dict[str, object]]]] = {}
+
+        for header, metadata in interact_fields.items():
+            value = self.get(header)
+
+            if not value:
+                continue
+
+            dynamic_by_category.setdefault(
+                metadata.category,
+                [],
+            ).append(
+                (
+                    metadata.order,
+                    {
+                        "label": metadata.label,
+                        "value": value,
+                        "kind": _kind(metadata.label, value),
+                    },
+                )
+            )
+
+        for category, items in dynamic_by_category.items():
+            items.sort(
+                key=lambda item: (
+                    item[0],
+                    str(item[1]["label"]).casefold(),
+                )
+            )
+
+            section_details.setdefault(
+                category,
+                [],
+            ).extend(
+                detail
+                for _, detail in items
+            )
+
+        additional: list[dict[str, object]] = []
+
         for label, raw_value in self.raw.items():
             if label in used:
                 continue
+
             value = _clean(raw_value)
+
             if value:
                 additional.append({
                     "label": label,
                     "value": value,
                     "kind": _kind(label, value),
                 })
+
         if additional:
-            sections.append({"name": "Additional Details", "details": additional})
+            section_details.setdefault(
+                "Additional Details",
+                [],
+            ).extend(additional)
+
+        ordered_names = list(SECTION_FIELDS)
+
+        for category in section_details:
+            if (
+                category not in ordered_names
+                and category != "Additional Details"
+            ):
+                ordered_names.append(category)
+
+        if "Additional Details" in section_details:
+            ordered_names.append("Additional Details")
+
+        sections: list[dict[str, object]] = []
+
+        seen_names: set[str] = set()
+        for section_name in ordered_names:
+            if section_name in seen_names:
+                continue
+
+            seen_names.add(section_name)
+            details = section_details.get(
+                section_name,
+                [],
+            )
+
+            if details:
+                sections.append({
+                    "name": section_name,
+                    "details": details,
+                })
 
         return sections
 
