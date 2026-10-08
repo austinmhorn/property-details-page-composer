@@ -151,12 +151,11 @@ python3 scripts/render_portfolio.py --open
 
 Generated HTML is written under `output/` and is intentionally ignored by Git.
 
-Local preview files load the shared development assets from:
+The Composer intentionally does not own Property Details CSS or JavaScript. Interact presentation is maintained in the `birchstone-interact-customization` repository under `property_details/`.
 
-- `assets/property-details.css`
-- `assets/property-details.js`
+The generated preview document contains presentation placeholders. The Birchstone Data Console **View Render** route injects and serves the current `property_details/property-details.css` and `property_details/property-details.js` from `birchstone-interact-customization/main`, so Portal previews use the same presentation source as Interact rather than a duplicated Composer copy.
 
-The CSS and JavaScript in `assets/` are not embedded in the HTML fragment published through Page Composer.
+Directly opening `output/portfolio_details.html` outside the Portal shows the generated structure without the Interact presentation assets.
 
 ## Portal page workflows
 
