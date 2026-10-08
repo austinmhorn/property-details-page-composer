@@ -5,9 +5,14 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_DIR / "data"
+ENV_FILE = PROJECT_DIR / "secrets" / ".env"
+
+load_dotenv(ENV_FILE)
 
 DEFAULT_VM_PDE_DIR = Path(
     "/home/birchstonereporting/Property-Data-Engine"
