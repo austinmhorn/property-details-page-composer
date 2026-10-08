@@ -10,7 +10,8 @@ JSON_DIR = BASE_DIR / "json"
 OUTPUT_DIR = BASE_DIR / "output"
 TEMPLATE_DIR = BASE_DIR / "templates"
 ENV_FILE = BASE_DIR / "secrets" / ".env"
-DATA_FILE = DATA_DIR / "notion_data_unsorted.csv"
+DATA_FILE = DATA_DIR / "notion_data.csv"
+FIELD_METADATA_FILE = DATA_DIR / "property_fields.json"
 
 load_dotenv(ENV_FILE)
 
