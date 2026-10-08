@@ -1,4 +1,3 @@
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -6,19 +5,11 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = SCRIPT_DIR.parent
-GO_BIN = Path("/usr/local/go/bin/go")
 
+if str(PROJECT_DIR) not in sys.path:
+    sys.path.insert(0, str(PROJECT_DIR))
 
-def resolve_go_binary() -> str:
-    """Return the production Go binary when available, otherwise use PATH."""
-    if GO_BIN.exists():
-        return str(GO_BIN)
-
-    fallback = shutil.which("go")
-    if fallback:
-        return fallback
-
-    raise FileNotFoundError("go")
+from property_composer.property_data_source import refresh_property_data
 
 
 def run_command(command: list[str], description: str) -> bool:
@@ -32,7 +23,9 @@ def run_command(command: list[str], description: str) -> bool:
             check=True,
         )
     except FileNotFoundError as error:
-        print(f"Error: command not found: {error.filename}")
+        print(
+            f"Error: command not found: {error.filename}"
+        )
         return False
     except subprocess.CalledProcessError as error:
         print(
@@ -41,31 +34,49 @@ def run_command(command: list[str], description: str) -> bool:
         )
         return False
 
-    print(f"{description} completed successfully.")
+    print(
+        f"{description} completed successfully."
+    )
+    return True
+
+
+def refresh_property_dataset() -> bool:
+    print(
+        "===== REFRESHING PROPERTY DATA DEPENDENCY ====="
+    )
+
+    try:
+        refresh_property_data()
+    except (
+        FileNotFoundError,
+        RuntimeError,
+        OSError,
+        subprocess.CalledProcessError,
+    ) as error:
+        print(
+            "Error: Property Data Engine dependency "
+            f"failed: {error}"
+        )
+        return False
+
+    print(
+        "Property Data Engine dependency completed successfully."
+    )
     return True
 
 
 def main() -> int:
-    try:
-        go_binary = resolve_go_binary()
-    except FileNotFoundError:
-        print("Error: command not found: go")
+    if not refresh_property_dataset():
         return 1
 
-    steps = [
-        (
-            [go_binary, "run", "."],
-            "Fetching property data",
-        ),
-        (
-            [sys.executable, "scripts/publish_portfolio.py"],
-            "Publishing property details page",
-        ),
-    ]
-
-    for command, description in steps:
-        if not run_command(command, description):
-            return 1
+    if not run_command(
+        [
+            sys.executable,
+            "scripts/publish_portfolio.py",
+        ],
+        "Publishing property details page",
+    ):
+        return 1
 
     return 0
 
