@@ -240,6 +240,10 @@ class Property:
 
             for label in labels:
                 used.add(label)
+
+                if label in managed_headers:
+                    continue
+
                 value = self.get(label)
 
                 if value:
