@@ -158,6 +158,17 @@ Local preview files load the shared development assets from:
 
 The CSS and JavaScript in `assets/` are not embedded in the HTML fragment published through Page Composer.
 
+## Portal page workflows
+
+The Birchstone Data Console exposes four operator actions for Property Details:
+
+- **Render** runs `scripts/render_workflow.py`, which refreshes Property Data Engine artifacts and creates both a browser preview and a publishable HTML fragment without touching Interact.
+- **View Render** serves the latest `output/portfolio_details.html` preview through the Portal.
+- **Publish** runs `scripts/publish_portfolio.py --existing`, which publishes the saved `output/portfolio_details.fragment.html` without refreshing or rendering again.
+- **Render & Publish** runs the production `start.sh` workflow end-to-end.
+
+The saved publish fragment exists so a reviewed render can be published later without silently generating different HTML at publish time.
+
 ## Publishing
 
 The production entrypoint publishes automatically:
