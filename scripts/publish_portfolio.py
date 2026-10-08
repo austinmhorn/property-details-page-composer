@@ -23,8 +23,15 @@ def main() -> None:
     )
     parser.add_argument(
         "--page-id",
-        default=os.getenv("INTERACT_PAGE_ID"),
-        help="Interact page ID (defaults to INTERACT_PAGE_ID from secrets/.env)",
+        default=os.getenv(
+            "INTERACT_PAGE_ID",
+            "2186",
+        ),
+        help=(
+            "Interact page ID "
+            "(defaults to INTERACT_PAGE_ID "
+            "from secrets/.env, otherwise 2186)"
+        ),
     )
     parser.add_argument("--selected", help="Property name or property number to show by default.")
     parser.add_argument(
@@ -35,7 +42,9 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.page_id:
-        raise SystemExit("❌ Provide --page-id or set INTERACT_PAGE_ID in secrets/.env")
+        raise SystemExit(
+            "❌ Provide --page-id or configure INTERACT_PAGE_ID."
+        )
 
     if args.existing:
         fragment_output = (
