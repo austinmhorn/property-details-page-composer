@@ -348,7 +348,7 @@ def load_properties(csv_path: Path | str = DATA_FILE) -> list[Property]:
     path = Path(csv_path)
     if not path.exists():
         raise FileNotFoundError(
-            f"Property dataset not found: {path}. Run the Go fetch first."
+            f"Property dataset not found: {path}. Refresh Property Data Engine artifacts first."
         )
 
     properties: list[Property] = []
