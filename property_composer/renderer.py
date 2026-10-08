@@ -50,6 +50,19 @@ def render_preview_document(
     return template.render(title=title, content=html)
 
 
+def write_publish_fragment(
+    html: str,
+    filename: str = "portfolio_details.fragment.html",
+) -> Path:
+    ensure_runtime_dirs()
+    output_path = OUTPUT_DIR / filename
+    output_path.write_text(
+        html,
+        encoding="utf-8",
+    )
+    return output_path
+
+
 def write_preview(
     html: str,
     filename: str = "portfolio_details.html",
