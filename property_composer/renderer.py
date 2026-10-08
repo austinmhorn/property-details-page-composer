@@ -5,7 +5,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from .config import OUTPUT_DIR, TEMPLATE_DIR, ensure_runtime_dirs
-from .property_data import Property
+from .property_data import Property, load_interact_field_metadata
 
 
 def _environment() -> Environment:
@@ -27,11 +27,17 @@ def render_portfolio(
         raise ValueError("Cannot render a portfolio page with no properties")
 
     selected_key = selected_key or properties[0].key
+    interact_fields, managed_headers = (
+        load_interact_field_metadata()
+    )
+
     template = _environment().get_template("portfolio_details.html")
     return template.render(
         properties=properties,
         selected_key=selected_key,
         page_title=page_title,
+        interact_fields=interact_fields,
+        managed_headers=managed_headers,
     )
 
 
