@@ -8,7 +8,11 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from property_composer.property_data import find_property, load_properties
-from property_composer.renderer import render_portfolio, write_preview
+from property_composer.renderer import (
+    render_portfolio,
+    write_preview,
+    write_publish_fragment,
+)
 
 
 def main() -> None:
@@ -23,8 +27,10 @@ def main() -> None:
     selected_key = find_property(properties, args.selected).key if args.selected else None
 
     html = render_portfolio(properties, selected_key=selected_key)
+    fragment_output = write_publish_fragment(html)
     output = write_preview(html)
     print(f"✅ Rendered {len(properties)} properties to {output}")
+    print(f"   Publish fragment: {fragment_output}")
     if args.open:
         webbrowser.open(output.resolve().as_uri())
 
