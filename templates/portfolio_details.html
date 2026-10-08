@@ -43,7 +43,7 @@
       {% endif %}
 
       <div class="property-sections">
-        {% for section in property.sections() %}
+        {% for section in property.sections(interact_fields, managed_headers) %}
         <section class="property-section">
           <h3>{{ section.name }}</h3>
           <dl class="property-detail-grid">
