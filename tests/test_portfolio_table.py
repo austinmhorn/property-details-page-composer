@@ -53,6 +53,26 @@ class PortfolioTableTests(unittest.TestCase):
         self.assertNotIn('Sort by Prop No', html)
         self.assertNotIn('Sort by PMS ID', html)
 
+    def test_column_chooser_respects_registry_visibility(self):
+        html = self.render([
+            {"csv_header": "Regional Manager", "display_in_interact": False},
+            {"csv_header": "Metro", "display_in_interact": True,
+             "interact_category": "Quick Facts", "interact_label": "Portfolio Market"},
+        ])
+        self.assertIn('data-property-column-chooser', html)
+        self.assertIn('data-property-columns-reset', html)
+        self.assertNotIn('data-property-column-key="Regional Manager"', html)
+        self.assertIn('data-property-column-key="Metro"', html)
+        self.assertIn('Portfolio Market', html)
+        self.assertIn('data-property-column-key="Property Name"', html)
+
+    def test_curated_columns_available_but_not_default(self):
+        html = self.render([])
+        self.assertIn('data-property-column-key="Landline"', html)
+        self.assertIn('data-property-column-key="Units"', html)
+        self.assertIn('data-property-column-checkbox=', html)
+        self.assertIn('data-property-column="Landline" hidden', html)
+
 
 if __name__ == "__main__":
     unittest.main()
