@@ -17,6 +17,45 @@ def _environment() -> Environment:
     )
 
 
+# The Table projection is an allowlisted *consumer* of the current presentation
+# contract. Never expose arbitrary CSV fields to a configurable table.
+TABLE_FIELDS = (
+    ("Property Name", "Property"),
+    ("City", "City"),
+    ("State", "State"),
+    ("Units", "Units"),
+    ("Regional Manager", "Regional Manager"),
+    ("Website", "Website"),
+    ("Metro", "Market"),
+)
+
+
+def _table_columns(interact_fields, managed_headers):
+    from .property_data import SECTION_FIELDS, SENSITIVE_FIELDS
+
+    curated = {header for group in SECTION_FIELDS.values() for header in group}
+    defaults = {header for header, _ in TABLE_FIELDS}
+    candidates = [header for header, _ in TABLE_FIELDS]
+    candidates.extend(header for header in sorted(curated | set(interact_fields))
+                      if header not in candidates)
+    labels = dict(TABLE_FIELDS)
+    columns = []
+    for header in candidates:
+        if header in SENSITIVE_FIELDS:
+            continue
+        if header != "Property Name" and header in managed_headers and header not in interact_fields:
+            continue
+        if header != "Property Name" and header not in curated and header not in interact_fields:
+            continue
+        metadata = interact_fields.get(header)
+        columns.append({
+            "header": header,
+            "label": metadata.label if metadata else labels.get(header, header),
+            "default_visible": header in defaults,
+        })
+    return columns
+
+
 def render_portfolio(
     properties: list[Property],
     *,
@@ -38,6 +77,7 @@ def render_portfolio(
         page_title=page_title,
         interact_fields=interact_fields,
         managed_headers=managed_headers,
+        table_columns=_table_columns(interact_fields, managed_headers),
     )
 
 

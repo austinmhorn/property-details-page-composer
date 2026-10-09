@@ -16,7 +16,64 @@
     </div>
   </header>
 
-  <div class="property-details-records">
+  <nav class="property-view-switch" aria-label="Property presentation" data-property-view-switch>
+    <button type="button" data-property-view-button="details" aria-pressed="true">Details</button>
+    <button type="button" data-property-view-button="table" aria-pressed="false">Table</button>
+  </nav>
+
+  <section class="property-table-view" data-property-table-view hidden aria-label="Portfolio table">
+    <div class="property-table-controls">
+      <label>Search properties <input type="search" data-property-table-search placeholder="Search portfolio"></label>
+      <label>State <select data-property-table-state><option value="">All states</option></select></label>
+      <label>Market <select data-property-table-market><option value="">All markets</option></select></label>
+      <details class="property-column-chooser" data-property-column-chooser>
+        <summary>Columns</summary>
+        <div class="property-column-chooser__menu">
+          <strong>Visible columns</strong>
+          {% for column in table_columns %}
+          <label><input type="checkbox" data-property-column-checkbox="{{ loop.index0 }}" data-property-column-key="{{ column.header }}" {% if column.default_visible %}checked{% endif %} {% if column.header == 'Property Name' %}disabled{% endif %}>{{ column.label }}</label>
+          {% endfor %}
+          <button type="button" data-property-columns-reset>Reset columns</button>
+        </div>
+      </details>
+      <button type="button" data-property-table-reset>Reset filters</button>
+      <span data-property-table-count aria-live="polite"></span>
+    </div>
+    <div class="property-table-scroll">
+      <table class="property-portfolio-table" data-property-table>
+        <thead><tr>
+          {% for column in table_columns %}
+          <th scope="col" data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}><button type="button" data-property-table-sort="{{ loop.index0 }}" aria-label="Sort by {{ column.label }}">{{ column.label }} <span aria-hidden="true">↕</span></button></th>
+          {% endfor %}
+        </tr></thead>
+        <tbody>
+          {% for property in properties %}
+          <tr data-property-table-row="{{ property.key }}" {% if table_columns|selectattr("header", "equalto", "State")|list %}data-property-table-state="{{ property.get('State') }}"{% endif %} {% if table_columns|selectattr("header", "equalto", "Metro")|list %}data-property-table-market="{{ property.get('Metro') }}"{% endif %}>
+            {% for column in table_columns %}
+            <td data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}>
+              {% if column.header == 'Property Name' %}
+              <button type="button" class="property-table-open" data-property-table-open="{{ property.key }}">{{ property.name }}</button>
+              {% elif column.header == 'Website' and property.get(column.header) %}
+              {% set site = property.get(column.header) %}
+              {% if site.startswith('https://') or site.startswith('http://') %}
+              <a href="{{ site }}" target="_blank" rel="noopener noreferrer">Open website ↗</a>
+              {% else %}
+              <span>—</span>
+              {% endif %}
+              {% else %}
+              {{ property.get(column.header) or '—' }}
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p data-property-table-empty hidden>No matching properties. Try another search or reset filters.</p>
+  </section>
+
+  <div class="property-details-records" data-property-details-view>
     {% for property in properties %}
     <article
       class="property-record"
