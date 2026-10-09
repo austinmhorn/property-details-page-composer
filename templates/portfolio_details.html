@@ -48,7 +48,7 @@
         </tr></thead>
         <tbody>
           {% for property in properties %}
-          <tr data-property-table-row="{{ property.key }}" data-property-table-state="{{ property.get('State') }}" data-property-table-market="{{ property.get('Metro') }}">
+          <tr data-property-table-row="{{ property.key }}" {% if table_columns|selectattr("header", "equalto", "State")|list %}data-property-table-state="{{ property.get('State') }}"{% endif %} {% if table_columns|selectattr("header", "equalto", "Metro")|list %}data-property-table-market="{{ property.get('Metro') }}"{% endif %}>
             {% for column in table_columns %}
             <td data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}>
               {% if column.header == 'Property Name' %}
