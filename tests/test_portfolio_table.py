@@ -92,5 +92,22 @@ class PortfolioTableTests(unittest.TestCase):
             self.assertIn(marker, html)
 
 
+    def test_table_website_normalizes_bare_domain(self):
+        from property_composer.property_data import Property
+        site = Property({"Property Name": "Example", "Website": "example.com"})
+        self.assertEqual(site.website_url, "https://example.com")
+        self.assertEqual(site.quick_links()[0]["url"], site.website_url)
+        with patch("property_composer.renderer.load_interact_field_metadata", return_value=({}, set())):
+            html = render_portfolio([site])
+        self.assertIn('href="https://example.com"', html)
+        self.assertIn('Open website', html)
+
+    def test_table_website_preserves_protocol_and_blank(self):
+        from property_composer.property_data import Property
+        self.assertEqual(Property({"Website": "https://example.org"}).website_url, "https://example.org")
+        self.assertEqual(Property({"Website": ""}).website_url, "")
+
+
+
 if __name__ == "__main__":
     unittest.main()
