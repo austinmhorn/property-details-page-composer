@@ -62,7 +62,7 @@
               <button type="button" class="property-table-open" data-property-table-open="{{ property.key }}">{{ property.name }}</button>
               {% elif column.header == 'Website' %}
               {% if property.website_url %}
-              <a href="{{ property.website_url }}" target="_blank" rel="noopener noreferrer">Open website ↗</a>
+              <a href="{{ property.website_url }}" target="_blank" rel="noopener noreferrer">{{ property.website_url }}</a>
               {% else %}
               <span>—</span>
               {% endif %}
