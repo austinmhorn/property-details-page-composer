@@ -31,7 +31,7 @@ class PortfolioTableTests(unittest.TestCase):
                        'data-property-view-button="details"', 'data-property-view-button="table"',
                        'data-property-table-row="1"', 'data-property-table-row="2"',
                        'data-property-table-search', 'data-property-table-sort="0"',
-                       'data-property-table-state', 'data-property-table-market'):
+                       'data-property-table-state', 'data-property-table-manager'):
             self.assertIn(marker, html)
         self.assertIn('data-property-record="1"', html)
         self.assertIn('data-property-record="2"', html)
@@ -73,15 +73,23 @@ class PortfolioTableTests(unittest.TestCase):
         self.assertIn('data-property-column-checkbox=', html)
         self.assertIn('data-property-column="Landline" hidden', html)
 
-    def test_hidden_market_and_state_not_exposed_in_filter_attributes(self):
+    def test_hidden_manager_and_state_not_exposed_in_filter_attributes(self):
         html = self.render([
             {"csv_header": "State", "display_in_interact": False},
-            {"csv_header": "Metro", "display_in_interact": False},
+            {"csv_header": "Regional Manager", "display_in_interact": False},
         ])
         self.assertNotIn('data-property-table-state="TX"', html)
-        self.assertNotIn('data-property-table-market="DFW"', html)
+        self.assertNotIn('data-property-table-manager="Jane Smith"', html)
         self.assertNotIn('data-property-column-key="State"', html)
-        self.assertNotIn('data-property-column-key="Metro"', html)
+        self.assertNotIn('data-property-column-key="Regional Manager"', html)
+
+    def test_filter_and_export_controls(self):
+        html = self.render([])
+        for marker in ('data-property-filter-options="state"',
+                       'data-property-filter-options="manager"',
+                       'data-property-columns-all', 'data-property-columns-reset',
+                       'data-property-table-export'):
+            self.assertIn(marker, html)
 
 
 if __name__ == "__main__":
