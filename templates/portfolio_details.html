@@ -60,10 +60,9 @@
             <td data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}>
               {% if column.header == 'Property Name' %}
               <button type="button" class="property-table-open" data-property-table-open="{{ property.key }}">{{ property.name }}</button>
-              {% elif column.header == 'Website' and property.get(column.header) %}
-              {% set site = property.get(column.header) %}
-              {% if site.startswith('https://') or site.startswith('http://') %}
-              <a href="{{ site }}" target="_blank" rel="noopener noreferrer">Open website ↗</a>
+              {% elif column.header == 'Website' %}
+              {% if property.website_url %}
+              <a href="{{ property.website_url }}" target="_blank" rel="noopener noreferrer">Open website ↗</a>
               {% else %}
               <span>—</span>
               {% endif %}
