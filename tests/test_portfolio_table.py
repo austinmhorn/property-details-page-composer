@@ -100,7 +100,8 @@ class PortfolioTableTests(unittest.TestCase):
         with patch("property_composer.renderer.load_interact_field_metadata", return_value=({}, set())):
             html = render_portfolio([site])
         self.assertIn('href="https://example.com"', html)
-        self.assertIn('Open website', html)
+        self.assertIn('>https://example.com</a>', html)
+        self.assertNotIn('Open website', html)
 
     def test_table_website_preserves_protocol_and_blank(self):
         from property_composer.property_data import Property
