@@ -30,28 +30,29 @@ class PortfolioTableTests(unittest.TestCase):
         for marker in ('data-property-details-view', 'data-property-table-view',
                        'data-property-view-button="details"', 'data-property-view-button="table"',
                        'data-property-table-row="1"', 'data-property-table-row="2"',
-                       'data-property-table-search', 'data-property-table-sort="0"',
-                       'data-property-table-state', 'data-property-table-manager'):
+                       'data-property-table-search', 'data-property-table-menu="0"'):
             self.assertIn(marker, html)
+        self.assertNotIn('data-property-filter-options="state"', html)
+        self.assertNotIn('data-property-filter-options="manager"', html)
         self.assertIn('data-property-record="1"', html)
         self.assertIn('data-property-record="2"', html)
 
     def test_unpublished_registry_field_not_in_table(self):
         html = self.render([{"csv_header": "Regional Manager", "display_in_interact": False}])
-        self.assertNotIn('Sort by Regional Manager', html)
+        self.assertNotIn('Sort or filter Regional Manager', html)
         self.assertNotIn('Jane Smith', html)
 
     def test_registry_label_applied_to_table(self):
         html = self.render([{"csv_header": "Regional Manager", "display_in_interact": True,
                              "interact_category": "Property Team",
                              "interact_label": "RM Contact"}])
-        self.assertIn('Sort by RM Contact', html)
+        self.assertIn('Sort or filter RM Contact', html)
         self.assertIn("Jane Smith", html)
 
     def test_table_hides_unapproved_csv_identifiers(self):
         html = self.render([])
-        self.assertNotIn('Sort by Prop No', html)
-        self.assertNotIn('Sort by PMS ID', html)
+        self.assertNotIn('Sort or filter Prop No', html)
+        self.assertNotIn('Sort or filter PMS ID', html)
 
     def test_column_chooser_respects_registry_visibility(self):
         html = self.render([
@@ -84,15 +85,12 @@ class PortfolioTableTests(unittest.TestCase):
             {"csv_header": "State", "display_in_interact": False},
             {"csv_header": "Regional Manager", "display_in_interact": False},
         ])
-        self.assertNotIn('data-property-table-state="TX"', html)
-        self.assertNotIn('data-property-table-manager="Jane Smith"', html)
         self.assertNotIn('data-property-column-key="State"', html)
         self.assertNotIn('data-property-column-key="Regional Manager"', html)
 
     def test_filter_and_export_controls(self):
         html = self.render([])
-        for marker in ('data-property-filter-options="state"',
-                       'data-property-filter-options="manager"',
+        for marker in ('data-property-table-menu="0"',
                        'data-property-columns-all', 'data-property-columns-reset',
                        'data-property-table-export'):
             self.assertIn(marker, html)

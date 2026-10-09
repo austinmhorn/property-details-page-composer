@@ -24,14 +24,6 @@
   <section class="property-table-view" data-property-table-view hidden aria-label="Portfolio table">
     <div class="property-table-controls">
       <label>Search properties <input type="search" data-property-table-search placeholder="Search portfolio"></label>
-      <details class="property-table-multiselect" data-property-filter="state">
-        <summary>State <span data-property-filter-summary="state">All states</span></summary>
-        <div class="property-table-multiselect__menu" data-property-filter-options="state" role="group" aria-label="Select states"></div>
-      </details>
-      <details class="property-table-multiselect" data-property-filter="manager">
-        <summary>Regional Manager <span data-property-filter-summary="manager">All managers</span></summary>
-        <div class="property-table-multiselect__menu" data-property-filter-options="manager" role="group" aria-label="Select regional managers"></div>
-      </details>
       <details class="property-column-chooser" data-property-column-chooser>
         <summary>Columns</summary>
         <div class="property-column-chooser__menu">
@@ -51,12 +43,12 @@
       <table class="property-portfolio-table" data-property-table>
         <thead><tr>
           {% for column in table_columns %}
-          <th scope="col" data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}><button type="button" data-property-table-sort="{{ loop.index0 }}" aria-label="Sort by {{ column.label }}">{{ column.label }} <span aria-hidden="true">↕</span></button></th>
+          <th scope="col" data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}><span class="property-table-heading">{{ column.label }}</span><button type="button" class="property-column-menu-trigger" data-property-table-menu="{{ loop.index0 }}" aria-label="Sort or filter {{ column.label }}" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">▾</span><span class="property-column-filter-indicator" hidden aria-hidden="true">●</span></button></th>
           {% endfor %}
         </tr></thead>
         <tbody>
           {% for property in properties %}
-          <tr data-property-table-row="{{ property.key }}" {% if table_columns|selectattr("header", "equalto", "State")|list %}data-property-table-state="{{ property.get('State') }}"{% endif %} {% if table_columns|selectattr("header", "equalto", "Regional Manager")|list %}data-property-table-manager="{{ property.get('Regional Manager') }}"{% endif %}>
+          <tr data-property-table-row="{{ property.key }}">
             {% for column in table_columns %}
             <td data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}>
               {% if column.header == 'Property Name' %}
