@@ -73,6 +73,16 @@ class PortfolioTableTests(unittest.TestCase):
         self.assertIn('data-property-column-checkbox=', html)
         self.assertIn('data-property-column="Landline" hidden', html)
 
+    def test_hidden_market_and_state_not_exposed_in_filter_attributes(self):
+        html = self.render([
+            {"csv_header": "State", "display_in_interact": False},
+            {"csv_header": "Metro", "display_in_interact": False},
+        ])
+        self.assertNotIn('data-property-table-state="TX"', html)
+        self.assertNotIn('data-property-table-market="DFW"', html)
+        self.assertNotIn('data-property-column-key="State"', html)
+        self.assertNotIn('data-property-column-key="Metro"', html)
+
 
 if __name__ == "__main__":
     unittest.main()
