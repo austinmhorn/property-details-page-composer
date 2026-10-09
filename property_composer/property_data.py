@@ -211,6 +211,11 @@ class Property:
     def get(self, label: str) -> str:
         return _clean(self.raw.get(label))
 
+    @property
+    def website_url(self) -> str:
+        """Same URL normalization used by the Details quick links."""
+        return _external_url(self.get("Website"))
+
     def quick_links(self) -> list[dict[str, str]]:
         labels = [
             ("Website", "Website"),
