@@ -26,6 +26,16 @@
       <label>Search properties <input type="search" data-property-table-search placeholder="Search portfolio"></label>
       <label>State <select data-property-table-state><option value="">All states</option></select></label>
       <label>Market <select data-property-table-market><option value="">All markets</option></select></label>
+      <details class="property-column-chooser" data-property-column-chooser>
+        <summary>Columns</summary>
+        <div class="property-column-chooser__menu">
+          <strong>Visible columns</strong>
+          {% for column in table_columns %}
+          <label><input type="checkbox" data-property-column-checkbox="{{ loop.index0 }}" data-property-column-key="{{ column.header }}" {% if column.default_visible %}checked{% endif %} {% if column.header == 'Property Name' %}disabled{% endif %}>{{ column.label }}</label>
+          {% endfor %}
+          <button type="button" data-property-columns-reset>Reset columns</button>
+        </div>
+      </details>
       <button type="button" data-property-table-reset>Reset filters</button>
       <span data-property-table-count aria-live="polite"></span>
     </div>
@@ -33,14 +43,14 @@
       <table class="property-portfolio-table" data-property-table>
         <thead><tr>
           {% for column in table_columns %}
-          <th scope="col"><button type="button" data-property-table-sort="{{ loop.index0 }}" aria-label="Sort by {{ column.label }}">{{ column.label }} <span aria-hidden="true">↕</span></button></th>
+          <th scope="col" data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}><button type="button" data-property-table-sort="{{ loop.index0 }}" aria-label="Sort by {{ column.label }}">{{ column.label }} <span aria-hidden="true">↕</span></button></th>
           {% endfor %}
         </tr></thead>
         <tbody>
           {% for property in properties %}
           <tr data-property-table-row="{{ property.key }}" data-property-table-state="{{ property.get('State') }}" data-property-table-market="{{ property.get('Metro') }}">
             {% for column in table_columns %}
-            <td>
+            <td data-property-column="{{ column.header }}" {% if not column.default_visible %}hidden{% endif %}>
               {% if column.header == 'Property Name' %}
               <button type="button" class="property-table-open" data-property-table-open="{{ property.key }}">{{ property.name }}</button>
               {% elif column.header == 'Website' and property.get(column.header) %}
