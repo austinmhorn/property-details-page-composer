@@ -36,10 +36,11 @@
         <summary>Columns</summary>
         <div class="property-column-chooser__menu">
           <strong>Visible columns</strong>
+          <div class="property-column-chooser__actions"><button type="button" data-property-columns-all>Select all</button><button type="button" data-property-columns-reset>Reset</button></div>
           {% for column in table_columns %}
           <label><input type="checkbox" data-property-column-checkbox="{{ loop.index0 }}" data-property-column-key="{{ column.header }}" {% if column.default_visible %}checked{% endif %} {% if column.header == 'Property Name' %}disabled{% endif %}>{{ column.label }}</label>
           {% endfor %}
-          <div class="property-column-chooser__actions"><button type="button" data-property-columns-all>Select all</button><button type="button" data-property-columns-reset>Reset</button></div>
+          
         </div>
       </details>
       <button type="button" data-property-table-reset>Reset filters</button>
