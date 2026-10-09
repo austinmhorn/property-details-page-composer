@@ -66,6 +66,12 @@ class PortfolioTableTests(unittest.TestCase):
         self.assertIn('Portfolio Market', html)
         self.assertIn('data-property-column-key="Property Name"', html)
 
+    def test_column_actions_appear_before_checkboxes(self):
+        html = self.render([])
+        menu = html.split('class="property-column-chooser__menu"', 1)[1].split("</details>", 1)[0]
+        self.assertLess(menu.index("data-property-columns-all"), menu.index("data-property-column-checkbox"))
+        self.assertLess(menu.index("data-property-columns-reset"), menu.index("data-property-column-checkbox"))
+
     def test_curated_columns_available_but_not_default(self):
         html = self.render([])
         self.assertIn('data-property-column-key="Landline"', html)
