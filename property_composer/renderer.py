@@ -53,7 +53,7 @@ def _table_columns(interact_fields, managed_headers):
         columns.append({
             "header": header,
             "label": metadata.label if metadata else labels.get(header, header),
-            "default_visible": header in defaults or metadata is not None,
+            "default_visible": header in defaults,
             "order": metadata.table_order if metadata is not None else None,
             "currency": bool(metadata and metadata.currency),
         })
