@@ -113,7 +113,7 @@ class PortfolioTableTests(unittest.TestCase):
         self.assertEqual(Property({"Website": ""}).website_url, "")
 
 
-    def test_independent_table_order_and_approved_columns_visible(self):
+    def test_independent_table_order_and_original_default_columns(self):
         fields = [
             {"csv_header": "Metro", "display_in_interact": True,
              "interact_category": "Quick Facts", "interact_label": "Market",
@@ -129,6 +129,19 @@ class PortfolioTableTests(unittest.TestCase):
         )
         self.assertIn('data-property-column-key="Metro" checked', html)
         self.assertIn('data-property-column-key="Regional Manager" checked', html)
+        self.assertIn('data-property-column-key="Landline"', html)
+        self.assertIn('data-property-column="Landline" hidden', html)
+
+    def test_newly_approved_column_is_available_but_not_default(self):
+        html = self.render([
+            {"csv_header": "Application Fee", "display_in_interact": True,
+             "interact_category": "Fees & Deposits",
+             "interact_label": "Application Fee",
+             "interact_table_order": 2},
+        ])
+        self.assertIn('data-property-column-key="Application Fee"', html)
+        self.assertNotIn('data-property-column-key="Application Fee" checked', html)
+        self.assertIn('data-property-column="Application Fee" hidden', html)
 
     def test_currency_fee_and_blank_values(self):
         from property_composer.renderer import render_portfolio
