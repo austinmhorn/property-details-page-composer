@@ -5,7 +5,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from .config import OUTPUT_DIR, TEMPLATE_DIR, ensure_runtime_dirs
-from .property_data import Property, load_interact_field_metadata
+from .property_data import Property, load_interact_field_metadata, _currency
 
 
 def _environment() -> Environment:
@@ -36,8 +36,10 @@ def _table_columns(interact_fields, managed_headers):
     curated = {header for group in SECTION_FIELDS.values() for header in group}
     defaults = {header for header, _ in TABLE_FIELDS}
     candidates = [header for header, _ in TABLE_FIELDS]
-    candidates.extend(header for header in sorted(curated | set(interact_fields))
-                      if header not in candidates)
+    candidates.extend(
+        header for header in sorted(curated | set(interact_fields))
+        if header not in candidates
+    )
     labels = dict(TABLE_FIELDS)
     columns = []
     for header in candidates:
@@ -51,8 +53,18 @@ def _table_columns(interact_fields, managed_headers):
         columns.append({
             "header": header,
             "label": metadata.label if metadata else labels.get(header, header),
-            "default_visible": header in defaults,
+            "default_visible": header in defaults or metadata is not None,
+            "order": metadata.table_order if metadata is not None else None,
+            "currency": bool(metadata and metadata.currency),
         })
+    # Property is always the first, sticky column. Registry-approved columns
+    # use independent Table View order; legacy curated extras follow.
+    columns.sort(key=lambda col: (
+        0 if col["header"] == "Property Name" else 1,
+        0 if col["order"] is not None else 1,
+        col["order"] if col["order"] is not None else 0,
+        col["label"].casefold(),
+    ))
     return columns
 
 
@@ -78,6 +90,7 @@ def render_portfolio(
         interact_fields=interact_fields,
         managed_headers=managed_headers,
         table_columns=_table_columns(interact_fields, managed_headers),
+        format_currency=_currency,
     )
 
 
