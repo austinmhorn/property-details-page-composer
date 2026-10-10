@@ -113,6 +113,58 @@ class PortfolioTableTests(unittest.TestCase):
         self.assertEqual(Property({"Website": ""}).website_url, "")
 
 
+    def test_independent_table_order_and_original_default_columns(self):
+        fields = [
+            {"csv_header": "Metro", "display_in_interact": True,
+             "interact_category": "Quick Facts", "interact_label": "Market",
+             "interact_details_order": 1, "interact_table_order": 70},
+            {"csv_header": "Regional Manager", "display_in_interact": True,
+             "interact_category": "Property Team", "interact_label": "RM",
+             "interact_details_order": 90, "interact_table_order": 5},
+        ]
+        html = self.render(fields)
+        self.assertLess(
+            html.index('data-property-column="Regional Manager"'),
+            html.index('data-property-column="Metro"')
+        )
+        self.assertIn('data-property-column-key="Metro" checked', html)
+        self.assertIn('data-property-column-key="Regional Manager" checked', html)
+        self.assertIn('data-property-column-key="Landline"', html)
+        self.assertIn('data-property-column="Landline" hidden', html)
+
+    def test_newly_approved_column_is_available_but_not_default(self):
+        html = self.render([
+            {"csv_header": "Application Fee", "display_in_interact": True,
+             "interact_category": "Fees & Deposits",
+             "interact_label": "Application Fee",
+             "interact_table_order": 2},
+        ])
+        self.assertIn('data-property-column-key="Application Fee"', html)
+        self.assertNotIn('data-property-column-key="Application Fee" checked', html)
+        self.assertIn('data-property-column="Application Fee" hidden', html)
+
+    def test_currency_fee_and_blank_values(self):
+        from property_composer.renderer import render_portfolio
+        with tempfile.TemporaryDirectory() as directory:
+            metadata_path = Path(directory) / "fields.json"
+            metadata_path.write_text(json.dumps({"version": 1, "fields": [
+                {"csv_header": "Application Fee", "display_in_interact": True,
+                 "interact_category": "Fees & Deposits",
+                 "interact_label": "Application Fee", "extractor_type": "formula_number",
+                 "interact_details_order": 8, "interact_table_order": 5}
+            ]}), encoding="utf-8")
+            metadata = load_interact_field_metadata(metadata_path)
+        properties = [
+            Property({"Property Name": "Alpha", "Application Fee": "125.50"}),
+            Property({"Property Name": "Beta", "Application Fee": ""}),
+            Property({"Property Name": "Gamma", "Application Fee": "0.00"}),
+        ]
+        with patch("property_composer.renderer.load_interact_field_metadata", return_value=metadata):
+            html = render_portfolio(properties)
+        self.assertIn("$125.50", html)
+        self.assertIn("$0.00", html)
+        self.assertIn("Fees &amp; Deposits", html)
+
 
 if __name__ == "__main__":
     unittest.main()

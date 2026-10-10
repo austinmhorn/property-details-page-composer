@@ -79,6 +79,8 @@ class InteractField:
     category: str
     label: str
     order: int = 0
+    table_order: int = 0
+    currency: bool = False
 
 
 def load_interact_field_metadata(
@@ -129,15 +131,27 @@ def load_interact_field_metadata(
             category = "Additional Details"
 
         try:
-            order = int(item.get("interact_order") or 0)
+            order = int(item.get("interact_details_order", item.get("interact_order")) or 0)
         except (TypeError, ValueError):
             order = 0
+
+        try:
+            table_order = int(item.get("interact_table_order", item.get("interact_order")) or 0)
+        except (TypeError, ValueError):
+            table_order = 0
+
+        currency = (
+            category == "Fees & Deposits"
+            and str(item.get("extractor_type", "")).startswith("formula_number")
+        )
 
         visible[header] = InteractField(
             csv_header=header,
             category=category,
             label=label,
             order=order,
+            table_order=table_order,
+            currency=currency,
         )
 
     return visible, managed_headers
@@ -187,6 +201,22 @@ def _kind(label: str, value: str) -> str:
     if any(token in label.lower() for token in ("phone", "landline", "webex", "tracking number")):
         return "phone"
     return "text"
+
+def _currency(value: str) -> str:
+    """Render populated numeric fees as USD, retaining meaningful zeroes."""
+    cleaned = _clean(value)
+    if not cleaned:
+        return ""
+    try:
+        from decimal import Decimal, InvalidOperation
+        amount = Decimal(cleaned.replace(",", "").replace("$", ""))
+        if not amount.is_finite():
+            return cleaned
+        return f"${amount:,.2f}"
+    except (InvalidOperation, ValueError):
+        return cleaned
+
+
 
 
 @dataclass(slots=True)
@@ -270,6 +300,9 @@ class Property:
 
             if not value:
                 continue
+
+            if metadata.currency:
+                value = _currency(value)
 
             dynamic_by_category.setdefault(
                 metadata.category,

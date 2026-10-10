@@ -60,7 +60,7 @@
               <span>—</span>
               {% endif %}
               {% else %}
-              {{ property.get(column.header) or '—' }}
+              {% if column.currency and property.get(column.header) %}{{ format_currency(property.get(column.header)) }}{% else %}{{ property.get(column.header) or '—' }}{% endif %}
               {% endif %}
             </td>
             {% endfor %}
