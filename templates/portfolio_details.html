@@ -28,9 +28,11 @@
         <summary>Columns</summary>
         <div class="property-column-chooser__menu">
           <strong>Visible columns</strong>
+          <label class="property-column-chooser__search-label" for="property-column-search">Search columns</label>
+          <input id="property-column-search" class="property-column-chooser__search" type="search" data-property-column-search placeholder="Find a column…" autocomplete="off">
           <div class="property-column-chooser__actions"><button type="button" data-property-columns-all>Select all</button><button type="button" data-property-columns-reset>Reset</button></div>
           {% for column in table_columns %}
-          <label><input type="checkbox" data-property-column-checkbox="{{ loop.index0 }}" data-property-column-key="{{ column.header }}" {% if column.default_visible %}checked{% endif %} {% if column.header == 'Property Name' %}disabled{% endif %}>{{ column.label }}</label>
+          <label class="property-column-chooser__option"><input type="checkbox" data-property-column-checkbox="{{ loop.index0 }}" data-property-column-key="{{ column.header }}" {% if column.default_visible %}checked{% endif %} {% if column.header == 'Property Name' %}disabled{% endif %}>{{ column.label }}</label>
           {% endfor %}
           
         </div>
