@@ -67,6 +67,14 @@ class PortfolioTableTests(unittest.TestCase):
         self.assertIn('Portfolio Market', html)
         self.assertIn('data-property-column-key="Property Name"', html)
 
+    def test_column_search_appears_before_actions_and_options(self):
+        html = self.render([])
+        menu = html.split('class="property-column-chooser__menu"', 1)[1].split("</details>", 1)[0]
+        self.assertIn('data-property-column-search', menu)
+        self.assertIn('class="property-column-chooser__option"', menu)
+        self.assertLess(menu.index("data-property-column-search"), menu.index("data-property-columns-all"))
+        self.assertLess(menu.index("data-property-columns-all"), menu.index("data-property-column-checkbox"))
+
     def test_column_actions_appear_before_checkboxes(self):
         html = self.render([])
         menu = html.split('class="property-column-chooser__menu"', 1)[1].split("</details>", 1)[0]
