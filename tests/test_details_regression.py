@@ -55,6 +55,8 @@ class DetailsRegressionTests(unittest.TestCase):
         self.assertIn('Request a Correction', html)
         self.assertIn('https://birchstoneres.notion.site/3f982f879539807296d5ef0dc0363ca1?pvs=105', html)
         self.assertIn('target="_blank" rel="noopener noreferrer"', html)
+        self.assertLess(html.index('property-details-selector-wrap'), html.index('property-details-correction-link'))
+        self.assertLess(html.index('property-details-correction-link'), html.index('id="property-details-selector"'))
         self.assertLess(html.index('property-details-correction-link'), html.index('data-property-view-switch'))
 
     def test_registry_hidden_field_never_appears(self):
