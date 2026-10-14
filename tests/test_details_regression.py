@@ -49,6 +49,14 @@ class DetailsRegressionTests(unittest.TestCase):
         self.assertIn("Baseline Community", html)
         self.assertIn("250", html)
 
+    def test_correction_link_is_shared_across_views(self):
+        html = self.render([])
+        self.assertEqual(html.count('class="property-details-correction-link"'), 1)
+        self.assertIn('Request a Correction', html)
+        self.assertIn('https://birchstoneres.notion.site/3f982f879539807296d5ef0dc0363ca1?pvs=105', html)
+        self.assertIn('target="_blank" rel="noopener noreferrer"', html)
+        self.assertLess(html.index('property-details-correction-link'), html.index('data-property-view-switch'))
+
     def test_registry_hidden_field_never_appears(self):
         html = self.render([
             {"csv_header": "Private Field", "display_in_interact": False,
