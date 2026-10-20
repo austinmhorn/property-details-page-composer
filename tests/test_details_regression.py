@@ -59,6 +59,24 @@ class DetailsRegressionTests(unittest.TestCase):
         self.assertLess(html.index('property-details-correction-link'), html.index('id="property-details-selector"'))
         self.assertLess(html.index('property-details-correction-link'), html.index('data-property-view-switch'))
 
+    def test_renamed_cares_act_header_uses_registry_metadata(self):
+        properties = [Property({
+            "Property Name": "Baseline Community",
+            "Prop No": "123",
+            "Cares Act": "30",
+        })]
+        html = self.render([{
+            "csv_header": "Cares Act",
+            "display_in_interact": True,
+            "interact_category": "Leasing & Policies",
+            "interact_label": "Cares Act",
+            "interact_details_order": 40,
+            "interact_table_order": 890,
+        }], properties)
+        self.assertIn("Cares Act", html)
+        self.assertIn("30", html)
+        self.assertNotIn("Cares Act / Days to File", html)
+
     def test_registry_hidden_field_never_appears(self):
         html = self.render([
             {"csv_header": "Private Field", "display_in_interact": False,
