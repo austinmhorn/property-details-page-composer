@@ -22,6 +22,8 @@ SENSITIVE_FIELDS = {
     "Priority Group",
 }
 
+# Legacy fallback labels for datasets without registry metadata.
+# Managed fields (including renamed CSV headers) use approved metadata below.
 SECTION_FIELDS: dict[str, list[str]] = {
     "Quick Facts": [
         "Units", "Year Built",
@@ -29,7 +31,7 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Groups", "Submarket", "Metro", "County",
     ],
     "Leasing & Policies": [
-        "Income Req.", "Late Fee Max", "Lease Terms", "Cares Act / Days to File",
+        "Income Req.", "Late Fee Max", "Lease Terms",
         "Resident Referral Maximum", "Unit Hold Times", "Units Displayed",
         "Deposit Alt", "Get 100", "Housing Units / Max Limit Set",
         "Reno Status",
