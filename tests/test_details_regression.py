@@ -77,6 +77,49 @@ class DetailsRegressionTests(unittest.TestCase):
         self.assertIn("30", html)
         self.assertNotIn("Cares Act / Days to File", html)
 
+    def test_owning_entity_follows_registry_visibility(self):
+        property_row = Property({
+            "Property Name": "Baseline Community",
+            "Prop No": "123",
+            "Owning Entity": "Example Holding Company",
+        })
+        field = {
+            "csv_header": "Owning Entity",
+            "interact_category": "Quick Facts",
+            "interact_label": "Owning Entity",
+            "interact_details_order": 35,
+            "interact_table_order": 270,
+        }
+        visible_html = self.render(
+            [{**field, "display_in_interact": True}],
+            [property_row],
+        )
+        self.assertIn("Example Holding Company", visible_html)
+        self.assertIn("Quick Facts", visible_html)
+        self.assertIn("Owning Entity", visible_html)
+        self.assertIn('data-property-column="Owning Entity"', visible_html)
+
+        hidden_html = self.render(
+            [{**field, "display_in_interact": False}],
+            [property_row],
+        )
+        self.assertNotIn("Example Holding Company", hidden_html)
+        self.assertNotIn('data-property-column="Owning Entity"', hidden_html)
+
+    def test_other_protected_fields_remain_excluded(self):
+        prop = Property({
+            "Property Name": "Baseline Community",
+            "Prop No": "123",
+            "EIN": "private-ein-sentinel",
+        })
+        html = self.render([{
+            "csv_header": "EIN",
+            "display_in_interact": True,
+            "interact_category": "Quick Facts",
+            "interact_label": "EIN",
+        }], [prop])
+        self.assertNotIn("private-ein-sentinel", html)
+
     def test_registry_hidden_field_never_appears(self):
         html = self.render([
             {"csv_header": "Private Field", "display_in_interact": False,
