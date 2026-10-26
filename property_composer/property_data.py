@@ -17,7 +17,6 @@ SENSITIVE_FIELDS = {
     "Payroll ID",
     "Maximum Allowed Employee Discount Units",
     "EIN",
-    "Owning Entity",
     "Exec. Report Due Date",
     "Priority Group",
 }
