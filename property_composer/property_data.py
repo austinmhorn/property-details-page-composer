@@ -29,12 +29,11 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Building Class", "Property Type", "Business Type",
         "Groups", "Submarket", "Metro", "County",
     ],
-    "Leasing & Policies": [
-        "Income Req.", "Late Fee Max", "Lease Terms",
-        "Resident Referral Maximum", "Unit Hold Times", "Units Displayed",
-        "Deposit Alt", "Get 100", "Housing Units / Max Limit Set",
-        "Reno Status",
-        "Renovation Strategy & Online Leasing Display", "Special Note",
+    "Property & Building Details": [
+        "Address", "City", "State", "Zip", "Formerly Known As",
+        "Gross Leasable SF", "Acres", "Units per Acre", "Buildings Count",
+        "Stories", "Parking Spaces",,
+        "Acquisition Date", "Years Under Management", "Dispo Date",
     ],
     "Property Team": [
         "Property Manager", "Regional Manager", "Area Manager",
@@ -46,10 +45,12 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Service Manager Email", "Customer Service Email", "Collateral Email",
         "Website Tracking Email", "Website Tracking Number", "Webex",
     ],
-    "Portals & Resources": [
-        "Website", "Prospect Portal Link", "Resident Portal Link",
-        "Rental Criteria Link", "Community Information | Fee Sheet",
-        "Link to Summary", "PEP Page",
+    "Leasing & Policies": [
+        "Income Req.", "Late Fee Max", "Lease Terms",
+        "Resident Referral Maximum", "Unit Hold Times", "Units Displayed",
+        "Deposit Alt", "Get 100", "Housing Units / Max Limit Set",
+        "Reno Status",
+        "Renovation Strategy & Online Leasing Display", "Special Note",
     ],
     "Systems & Programs": [
         "AptLife", "Flex", "Spruce", "BlueMoon Exp.", "BlueMoon License ID",
@@ -59,18 +60,15 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Website Host", "LeaseLock", "LeaseLock Cost", "Housing Connector",
         "Zumper GBP",
     ],
-    "Marketing & Reviews": [
+    "Portals & Resources": [
+        "Website", "Prospect Portal Link", "Resident Portal Link",
+        "Rental Criteria Link", "Community Information | Fee Sheet",
+        "Link to Summary", "PEP Page",,
         "ApartmentRatings.com", "ApartmentGuide Review", "Apartments.com Review",
         "Facebook Review", "Google Review", "Facebook", "Instagram", "JTurner",
         "Website Design Template",
     ],
-    "Property & Building Details": [
-        "Address", "City", "State", "Zip", "Formerly Known As",
-        "Gross Leasable SF", "Acres", "Units per Acre", "Buildings Count",
-        "Stories", "Parking Spaces",
-    ],
-    "Administrative Details": [
-        "Acquisition Date", "Years Under Management", "Dispo Date",
+    "Fees & Deposits": [
     ],
 }
 
@@ -129,7 +127,7 @@ def load_interact_field_metadata(
         label = _clean(item.get("interact_label")) or header
 
         if not category:
-            category = "Additional Details"
+            category = "Quick Facts"
 
         try:
             order = int(item.get("interact_details_order", item.get("interact_order")) or 0)
@@ -320,6 +318,8 @@ class Property:
             )
 
         for category, items in dynamic_by_category.items():
+            if category not in SECTION_FIELDS:
+                continue
             items.sort(
                 key=lambda item: (
                     item[0],
@@ -335,38 +335,9 @@ class Property:
                 for _, detail in items
             )
 
-        additional: list[dict[str, object]] = []
-
-        for label, raw_value in self.raw.items():
-            if label in used:
-                continue
-
-            value = _clean(raw_value)
-
-            if value:
-                additional.append({
-                    "label": label,
-                    "value": value,
-                    "kind": _kind(label, value),
-                })
-
-        if additional:
-            section_details.setdefault(
-                "Additional Details",
-                [],
-            ).extend(additional)
-
+        # Only the eight supported sections are rendered. Unmanaged CSV columns
+        # cannot silently create an unreviewed ninth Details pane.
         ordered_names = list(SECTION_FIELDS)
-
-        for category in section_details:
-            if (
-                category not in ordered_names
-                and category != "Additional Details"
-            ):
-                ordered_names.append(category)
-
-        if "Additional Details" in section_details:
-            ordered_names.append("Additional Details")
 
         sections: list[dict[str, object]] = []
 
