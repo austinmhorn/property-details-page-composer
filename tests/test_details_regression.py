@@ -37,6 +37,40 @@ class DetailsRegressionTests(unittest.TestCase):
         with patch("property_composer.renderer.load_interact_field_metadata", return_value=metadata):
             return render_portfolio(properties or [self.property])
 
+    def test_eight_sections_follow_requested_grid_order(self):
+        from property_composer.property_data import SECTION_FIELDS
+        expected = [
+            "Quick Facts", "Property & Building Details",
+            "Property Team", "Contacts", "Leasing & Policies",
+            "Systems & Programs", "Portals & Resources", "Fees & Deposits",
+        ]
+        self.assertEqual(list(SECTION_FIELDS), expected)
+        values = {"Property Name": "Baseline Community", "Prop No": "123"}
+        fields = []
+        for index, category in enumerate(expected):
+            header = f"Example Section Field {index}"
+            values[header] = f"Section value {index}"
+            fields.append({
+                "csv_header": header, "display_in_interact": True,
+                "interact_category": category, "interact_label": header,
+                "interact_details_order": 10,
+            })
+        html = self.render(fields, [Property(values)])
+        section_html = html.split('class="property-sections"', 1)[1]
+        last = -1
+        for category in expected:
+            current = section_html.index(category.replace("&", "&amp;"))
+            self.assertGreater(current, last)
+            last = current
+
+    def test_unmanaged_properties_do_not_create_ninth_section(self):
+        html = self.render([], [Property({
+            "Property Name": "Baseline Community", "Prop No": "123",
+            "Unmanaged Other Column": "Unreviewed value",
+        })])
+        self.assertNotIn("Additional Details", html)
+        self.assertNotIn("Unreviewed value", html)
+
     def test_details_markup_and_selection_contract(self):
         html = self.render([])
         for marker in (
@@ -136,11 +170,11 @@ class DetailsRegressionTests(unittest.TestCase):
         old = self.render([{"csv_header": "Custom Program", "display_in_interact": True,
                             "interact_category": "Systems & Programs", "interact_label": "Old Label"}])
         new = self.render([{"csv_header": "Custom Program", "display_in_interact": True,
-                            "interact_category": "Marketing & Reviews", "interact_label": "New Label"}])
+                            "interact_category": "Portals & Resources", "interact_label": "New Label"}])
         self.assertIn("Old Label", old)
         self.assertNotIn("Old Label", new)
         self.assertIn("New Label", new)
-        self.assertIn("Marketing &amp; Reviews", new)
+        self.assertIn("Portals &amp; Resources", new)
 
     def test_unsafe_property_data_is_html_escaped(self):
         prop = Property({"Property Name": '<script>alert("x")</script>',
