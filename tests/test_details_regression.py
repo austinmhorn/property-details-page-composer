@@ -37,6 +37,40 @@ class DetailsRegressionTests(unittest.TestCase):
         with patch("property_composer.renderer.load_interact_field_metadata", return_value=metadata):
             return render_portfolio(properties or [self.property])
 
+    def test_eight_sections_follow_requested_grid_order(self):
+        from property_composer.property_data import SECTION_FIELDS
+        expected = [
+            "Quick Facts", "Property & Building Details",
+            "Property Team", "Contacts", "Leasing & Policies",
+            "Systems & Programs", "Portals & Resources", "Fees & Deposits",
+        ]
+        self.assertEqual(list(SECTION_FIELDS), expected)
+        values = {"Property Name": "Baseline Community", "Prop No": "123"}
+        fields = []
+        for index, category in enumerate(expected):
+            header = f"Example Section Field {index}"
+            values[header] = f"Section value {index}"
+            fields.append({
+                "csv_header": header, "display_in_interact": True,
+                "interact_category": category, "interact_label": header,
+                "interact_details_order": 10,
+            })
+        html = self.render(fields, [Property(values)])
+        section_html = html.split('class="property-sections"', 1)[1]
+        last = -1
+        for category in expected:
+            current = section_html.index(category)
+            self.assertGreater(current, last)
+            last = current
+
+    def test_unmanaged_properties_do_not_create_ninth_section(self):
+        html = self.render([], [Property({
+            "Property Name": "Baseline Community", "Prop No": "123",
+            "Unmanaged Other Column": "Unreviewed value",
+        })])
+        self.assertNotIn("Additional Details", html)
+        self.assertNotIn("Unreviewed value", html)
+
     def test_details_markup_and_selection_contract(self):
         html = self.render([])
         for marker in (
