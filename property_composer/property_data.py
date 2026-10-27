@@ -32,7 +32,7 @@ SECTION_FIELDS: dict[str, list[str]] = {
     "Property & Building Details": [
         "Address", "City", "State", "Zip", "Formerly Known As",
         "Gross Leasable SF", "Acres", "Units per Acre", "Buildings Count",
-        "Stories", "Parking Spaces",,
+        "Stories", "Parking Spaces",
         "Acquisition Date", "Years Under Management", "Dispo Date",
     ],
     "Property Team": [
@@ -63,7 +63,7 @@ SECTION_FIELDS: dict[str, list[str]] = {
     "Portals & Resources": [
         "Website", "Prospect Portal Link", "Resident Portal Link",
         "Rental Criteria Link", "Community Information | Fee Sheet",
-        "Link to Summary", "PEP Page",,
+        "Link to Summary", "PEP Page",
         "ApartmentRatings.com", "ApartmentGuide Review", "Apartments.com Review",
         "Facebook Review", "Google Review", "Facebook", "Instagram", "JTurner",
         "Website Design Template",
