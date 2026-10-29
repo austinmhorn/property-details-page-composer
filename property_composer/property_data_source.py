@@ -133,6 +133,15 @@ def sync_property_data_artifacts(
         metadata_target,
     )
 
+    # Related fees are an optional v3 artifact. Production PDE v2 can
+    # continue operating without this file during staged migration.
+    source_fees = engine_dir / "property_fees.json"
+    if source_fees.is_file():
+        shutil.copy2(source_fees, DATA_DIR / "property_fees.json")
+    else:
+        # Never display stale v3 fee data alongside a fresh v2 dataset.
+        (DATA_DIR / "property_fees.json").unlink(missing_ok=True)
+
     print(
         "Synced Property Data Engine artifacts:"
     )
