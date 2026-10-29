@@ -182,10 +182,11 @@ def sync_property_data_artifacts(
 
 
 def refresh_property_data() -> tuple[Path, Path]:
-    engine_dir = (
-        run_property_data_engine()
-    )
+    if fee_source() == "v3":
+        # Consume a previously completed and verified PDE run. Do not run
+        # start.sh: production PDE owns the schedule and Sheets updates.
+        engine_dir = resolve_property_data_engine_dir()
+        return sync_property_data_artifacts(engine_dir)
 
-    return sync_property_data_artifacts(
-        engine_dir
-    )
+    engine_dir = run_property_data_engine()
+    return sync_property_data_artifacts(engine_dir)
