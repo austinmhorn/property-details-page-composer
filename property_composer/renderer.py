@@ -7,6 +7,8 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from .config import OUTPUT_DIR, TEMPLATE_DIR, ensure_runtime_dirs
 from .property_data import Property, load_interact_field_metadata, _currency
 from .related_fees import load_fee_sections, fee_source
+from .artifact_manifest import verify_manifest
+from .config import DATA_DIR
 
 
 def _environment() -> Environment:
@@ -83,7 +85,11 @@ def render_portfolio(
         load_interact_field_metadata()
     )
 
-    fee_sections = load_fee_sections() if fee_source() == 'v3' else {}
+    if fee_source() == 'v3':
+        verify_manifest(DATA_DIR)
+        fee_sections = load_fee_sections()
+    else:
+        fee_sections = {}
     template = _environment().get_template("portfolio_details.html")
     return template.render(
         properties=properties,
