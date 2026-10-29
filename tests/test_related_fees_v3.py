@@ -45,6 +45,32 @@ class RelatedFeesTests(unittest.TestCase):
         detached = next(f for f in groups[0]["fees"] if f["label"].startswith("Detached"))
         self.assertEqual(len(detached["history"]), 2)
 
+
+    def test_negative_current_fee_suppressed_and_security_deposits_distinguished(self):
+        dataset = {"version": 3, "properties": {"p": {"property_name": "Avery", "fees": [
+            {"fee_type": "Hold Deposit", "variant": "Setup", "current": {
+                "amount": "-250", "category": "Deposit", "group": "Hold"
+            }, "history": [{"id": "n", "amount": "-250", "status": "Active"}]},
+            {"fee_type": "Security Deposit", "variant": "Standard Deposit",
+             "current": {"amount": "500", "category": "Deposit", "group": "Security"},
+             "history": [{"id": "s", "amount": "500", "status": "Active"}]},
+            {"fee_type": "Security Deposit", "variant": "Conditional Approval",
+             "current": {"amount": "1000", "category": "Deposit", "group": "Security"},
+             "history": [{"id": "c", "amount": "1000", "status": "Active"},
+                         {"id": "n", "amount": "-100", "status": "Inactive"}]}
+        ]}}}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fees.json"
+            path.write_text(json.dumps(dataset))
+            categories = load_fee_sections(path)["avery"]
+        fees = [fee for cat in categories for group in cat["groups"] for fee in group["fees"]]
+        by_label = {fee["label"]: fee for fee in fees}
+        self.assertTrue(by_label["Hold Deposit"]["suppress"])
+        self.assertEqual(by_label["Hold Deposit"]["history"], [])
+        self.assertFalse(by_label["Security Deposit (Standard)"]["suppress"])
+        self.assertFalse(by_label["Security Deposit (Conditional)"]["suppress"])
+        self.assertEqual(len(by_label["Security Deposit (Conditional)"]["history"]), 1)
+
     def test_legacy_default_and_invalid_mode(self):
         with patch.dict("os.environ", {}, clear=True):
             self.assertEqual(fee_source(), "legacy")
