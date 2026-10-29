@@ -122,6 +122,24 @@ class RelatedFeesTests(unittest.TestCase):
         self.assertEqual(by_name["Old Fee"]["state"], "noncurrent")
         self.assertEqual(len(by_name["Old Fee"]["history"]), 1)
 
+    def test_v3_refresh_never_runs_pde(self):
+        fake_engine = Path("/example/pde-v3")
+        with patch.dict("os.environ", {"COMPOSER_FEE_SOURCE": "v3"}), \
+             patch.object(source, "resolve_property_data_engine_dir", return_value=fake_engine), \
+             patch.object(source, "sync_property_data_artifacts", return_value=("csv", "metadata")) as sync, \
+             patch.object(source, "run_property_data_engine", side_effect=AssertionError("PDE must not execute")):
+            self.assertEqual(source.refresh_property_data(), ("csv", "metadata"))
+            sync.assert_called_once_with(fake_engine)
+
+    def test_legacy_refresh_still_runs_pde(self):
+        fake_engine = Path("/example/pde-v2")
+        with patch.dict("os.environ", {"COMPOSER_FEE_SOURCE": "legacy"}), \
+             patch.object(source, "run_property_data_engine", return_value=fake_engine) as run, \
+             patch.object(source, "sync_property_data_artifacts", return_value=("csv", "metadata")) as sync:
+            self.assertEqual(source.refresh_property_data(), ("csv", "metadata"))
+            run.assert_called_once_with()
+            sync.assert_called_once_with(fake_engine)
+
     def test_manifest_missing_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(FileNotFoundError):
