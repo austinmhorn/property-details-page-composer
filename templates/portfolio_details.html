@@ -140,20 +140,38 @@
               {% for fee in group.fees %}
               <div class="property-fee-item">
                 <div class="property-fee-item__heading">
-                  <span>{{ fee.label }}{% if fee.variant %} <small>({{ fee.variant }})</small>{% endif %}</span>
+                  <span class="property-fee-item__name">{{ fee.label }}{% if fee.variant %} <small>({{ fee.variant }})</small>{% endif %}</span>
                   {% if fee.state == 'current' %}<strong>{{ fee.amount }}</strong>
-                  {% elif fee.state == 'unresolved' %}<strong class="property-fee-status property-fee-status--unresolved">Amount requires review</strong>
+                  {% elif fee.state == 'unresolved' %}<strong class="property-fee-status property-fee-status--unresolved">Requires review</strong>
                   {% else %}<strong class="property-fee-status">No current fee</strong>{% endif %}
                 </div>
-                {% if fee.effective %}<p>Effective {{ fee.effective }}</p>{% endif %}
-                {% if fee.history and (fee.history|length > 1 or fee.state != 'current') %}
+                {% if fee.history %}
                 <details class="property-fee-history">
-                  <summary>View history ({{ fee.history|length }} records)</summary>
-                  <ul>
-                    {% for historical in fee.history %}
-                    <li><strong>{{ historical.amount or '—' }}</strong> · {{ historical.effective or 'No effective date' }} – {{ historical.end or 'Open' }} · {{ historical.status or 'Unknown status' }}</li>
-                    {% endfor %}
-                  </ul>
+                  <summary>View fee details ({{ fee.history|length }})</summary>
+                  <div class="property-fee-history__table-wrap">
+                    <table class="property-fee-history__table">
+                      <thead><tr><th scope="col">Amount</th><th scope="col">Effective period</th><th scope="col">Status</th></tr></thead>
+                      <tbody>
+                        {% for historical in fee.history %}
+                        <tr>
+                          <td class="property-fee-history__amount">{{ historical.amount or '—' }}</td>
+                          <td class="property-fee-history__period">
+                            <span>{{ historical.effective or 'Not specified' }}</span>
+                            {% if historical.end %}<span class="property-fee-history__arrow" aria-label="through">→</span><span>{{ historical.end }}</span>{% else %}<span class="property-fee-history__ongoing">Ongoing</span>{% endif %}
+                          </td>
+                          {% set status_label = historical.status or 'Unknown' %}
+                          {% set status_key = status_label|lower|replace(' ', '-') %}
+                          <td><span class="property-fee-history__status property-fee-history__status--{{ status_key if status_key in ('active', 'inactive', 'pending', 'expired', 'future') else 'neutral' }}">{{ status_label }}</span></td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+                {% elif fee.state == 'current' and fee.effective %}
+                <details class="property-fee-history">
+                  <summary>View fee details</summary>
+                  <div class="property-fee-history__single">Current fee effective {{ fee.effective }}</div>
                 </details>
                 {% endif %}
               </div>
