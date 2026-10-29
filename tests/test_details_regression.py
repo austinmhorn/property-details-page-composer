@@ -187,9 +187,25 @@ class DetailsRegressionTests(unittest.TestCase):
     def test_unknown_metadata_version_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bad.json"
-            path.write_text('{"version":2,"fields":[]}', encoding="utf-8")
+            path.write_text('{"version":3,"fields":[]}', encoding="utf-8")
             with self.assertRaises(RuntimeError):
                 load_interact_field_metadata(path)
+
+    def test_canonical_registry_v2_is_supported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fields.json"
+            path.write_text(json.dumps({"version": 2, "fields": [{
+                "csv_header": "Custom Program",
+                "display_in_interact": True,
+                "interact_category": "Systems & Programs",
+                "interact_label": "Program Label",
+                "interact_details_order": 11,
+                "interact_table_order": 21
+            }]}), encoding="utf-8")
+            visible, managed = load_interact_field_metadata(path)
+        self.assertIn("Custom Program", visible)
+        self.assertIn("Custom Program", managed)
+        self.assertEqual(visible["Custom Program"].table_order, 21)
 
     def test_multiple_properties_stay_in_initial_html(self):
         second = Property({"Property Name": "Other Community", "Prop No": "456"})
