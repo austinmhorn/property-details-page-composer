@@ -9,12 +9,33 @@ import json
 import os
 from collections import defaultdict
 from pathlib import Path
+from decimal import Decimal, InvalidOperation
 
 from .config import DATA_DIR
 from .property_data import _currency
 
 
 FEE_FILE = DATA_DIR / "property_fees.json"
+
+
+def _negative_amount(value: object) -> bool:
+    if value is None or str(value).strip() == "":
+        return False
+    try:
+        return Decimal(str(value).replace("$", "").replace(",", "").strip()) < 0
+    except (InvalidOperation, ValueError):
+        return False
+
+
+def _security_deposit_label(name: str, variant: str) -> str:
+    if name.strip().casefold() != "security deposit":
+        return name
+    method = variant.casefold()
+    if "conditional" in method:
+        return f"{name} (Conditional)"
+    if "standard" in method:
+        return f"{name} (Standard)"
+    return name
 
 def fee_source() -> str:
     """Explicit opt-in. An artifact alone never activates v3."""
@@ -53,11 +74,12 @@ def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
             family = (exemplar.get("group") or group.get("fee_type") or "Other").strip()
             unresolved = (property_id, group.get("fee_key")) in overlaps
             state = "current" if current else ("unresolved" if unresolved else "noncurrent")
-            history = sorted(entries,
+            history = sorted((item for item in entries if not _negative_amount(item.get("amount"))),
                              key=lambda x: (x.get("effective") or "", x.get("id") or ""),
                              reverse=True)
             categories[category][family].append({
-                "label": group.get("fee_type") or exemplar.get("name") or "Fee",
+                "label": _security_deposit_label(group.get("fee_type") or exemplar.get("name") or "Fee", group.get("variant") or ""),
+                "suppress": bool(current and _negative_amount(current.get("amount"))),
                 "variant": group.get("variant") or "",
                 "state": state,
                 "amount": _currency(current.get("amount")) if current else None,
