@@ -1,4 +1,6 @@
 import json
+import hashlib
+import uuid
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,6 +8,7 @@ from unittest.mock import patch
 
 from property_composer.renderer import render_portfolio
 from property_composer.related_fees import fee_source
+from property_composer.artifact_manifest import verify_manifest, REQUIRED, MANIFEST
 from property_composer import property_data_source as source
 
 from property_composer.related_fees import load_fee_sections
@@ -61,6 +64,33 @@ class RelatedFeesTests(unittest.TestCase):
                                        "PROPERTY_DATA_ENGINE_DIR": ""}):
             with self.assertRaises(RuntimeError):
                 source.resolve_property_data_engine_dir()
+
+    def test_manifest_valid_and_tampering_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            entries = {}
+            for name in REQUIRED:
+                payload = ("fixture:" + name).encode()
+                (root / name).write_bytes(payload)
+                entries[name] = {
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                    "size": len(payload),
+                }
+            manifest = {
+                "schema_version": 1, "run_id": str(uuid.uuid4()),
+                "created_at": "2026-10-29T14:00:00+00:00",
+                "artifacts": entries,
+            }
+            (root / MANIFEST).write_text(json.dumps(manifest))
+            self.assertEqual(verify_manifest(root)["run_id"], manifest["run_id"])
+            (root / "property_fees.json").write_bytes(b"tampered")
+            with self.assertRaisesRegex(ValueError, "checksum mismatch"):
+                verify_manifest(root)
+
+    def test_manifest_missing_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(FileNotFoundError):
+                verify_manifest(Path(directory))
 
     def test_missing_property_name_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
