@@ -8,6 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from .related_fees import fee_source
+from .artifact_manifest import verify_manifest, MANIFEST
 
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
@@ -123,6 +124,7 @@ def sync_property_data_artifacts(
 
     source_fees = engine_dir / "property_fees.json"
     if fee_source() == "v3":
+        verify_manifest(engine_dir)
         if not source_fees.is_file():
             raise FileNotFoundError(f"Missing mandatory v3 fee artifact: {source_fees}")
         if source_fees.stat().st_mtime < source_csv.stat().st_mtime:
@@ -154,9 +156,12 @@ def sync_property_data_artifacts(
     source_fees = engine_dir / "property_fees.json"
     if fee_source() == "v3":
         shutil.copy2(source_fees, DATA_DIR / "property_fees.json")
+        shutil.copy2(engine_dir / MANIFEST, DATA_DIR / MANIFEST)
+        verify_manifest(DATA_DIR)
     else:
         # Never display stale v3 fee data alongside a fresh v2 dataset.
         (DATA_DIR / "property_fees.json").unlink(missing_ok=True)
+        (DATA_DIR / MANIFEST).unlink(missing_ok=True)
 
     print(
         "Synced Property Data Engine artifacts:"
