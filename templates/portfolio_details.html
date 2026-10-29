@@ -138,7 +138,7 @@
             <div class="property-fee-group">
 
               {% for fee in group.fees %}
-              {% if fee.state != 'noncurrent' %}
+              {% if fee.state != 'noncurrent' and not fee.suppress %}
               <div class="property-fee-item">
                 <div class="property-fee-item__heading">
                   <span class="property-fee-item__name">{{ fee.label }}</span>
