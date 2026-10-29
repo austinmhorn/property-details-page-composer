@@ -141,10 +141,12 @@
               <div class="property-fee-item">
                 <div class="property-fee-item__heading">
                   <span>{{ fee.label }}{% if fee.variant %} <small>({{ fee.variant }})</small>{% endif %}</span>
-                  <strong>{{ fee.amount }}</strong>
+                  {% if fee.state == 'current' %}<strong>{{ fee.amount }}</strong>
+                  {% elif fee.state == 'unresolved' %}<strong class="property-fee-status property-fee-status--unresolved">Amount requires review</strong>
+                  {% else %}<strong class="property-fee-status">No current fee</strong>{% endif %}
                 </div>
                 {% if fee.effective %}<p>Effective {{ fee.effective }}</p>{% endif %}
-                {% if fee.history|length > 1 %}
+                {% if fee.history and (fee.history|length > 1 or fee.state != 'current') %}
                 <details class="property-fee-history">
                   <summary>View history ({{ fee.history|length }} records)</summary>
                   <ul>
