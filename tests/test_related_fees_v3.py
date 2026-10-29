@@ -2,6 +2,11 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+
+from property_composer.renderer import render_portfolio
+from property_composer.related_fees import fee_source
+from property_composer import property_data_source as source
 
 from property_composer.related_fees import load_fee_sections
 
@@ -36,6 +41,26 @@ class RelatedFeesTests(unittest.TestCase):
                          {"$95.00", "$125.00"})
         detached = next(f for f in groups[0]["fees"] if f["label"].startswith("Detached"))
         self.assertEqual(len(detached["history"]), 2)
+
+    def test_legacy_default_and_invalid_mode(self):
+        with patch.dict("os.environ", {}, clear=True):
+            self.assertEqual(fee_source(), "legacy")
+        with patch.dict("os.environ", {"COMPOSER_FEE_SOURCE": "v3"}):
+            self.assertEqual(fee_source(), "v3")
+        with patch.dict("os.environ", {"COMPOSER_FEE_SOURCE": "unknown"}):
+            with self.assertRaises(ValueError):
+                fee_source()
+
+    def test_v3_missing_artifact_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(FileNotFoundError):
+                load_fee_sections(Path(directory) / "absent.json")
+
+    def test_v3_requires_explicit_engine(self):
+        with patch.dict("os.environ", {"COMPOSER_FEE_SOURCE": "v3",
+                                       "PROPERTY_DATA_ENGINE_DIR": ""}):
+            with self.assertRaises(RuntimeError):
+                source.resolve_property_data_engine_dir()
 
     def test_missing_property_name_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
