@@ -102,7 +102,9 @@
       {% endif %}
 
       <div class="property-sections">
+        {% set dynamic_fees = fee_sections.get(property.name|lower, []) %}
         {% for section in property.sections(interact_fields, managed_headers) %}
+        {% if not (dynamic_fees and section.name == 'Fees & Deposits') %}
         <section class="property-section">
           <h3>{{ section.name }}</h3>
           <dl class="property-detail-grid">
@@ -124,7 +126,42 @@
             {% endfor %}
           </dl>
         </section>
+        {% endif %}
         {% endfor %}
+        {% if dynamic_fees %}
+        <section class="property-section property-fees-section" aria-label="Current fees and fee history">
+          <h3>Fees &amp; Deposits</h3>
+          {% for category in dynamic_fees %}
+          <div class="property-fee-category">
+            <h4>{{ category.name }}</h4>
+            {% for group in category.groups %}
+            <div class="property-fee-group">
+              <h5>{{ group.name }}</h5>
+              {% for fee in group.fees %}
+              <div class="property-fee-item">
+                <div class="property-fee-item__heading">
+                  <span>{{ fee.label }}{% if fee.variant %} <small>({{ fee.variant }})</small>{% endif %}</span>
+                  <strong>{{ fee.amount }}</strong>
+                </div>
+                {% if fee.effective %}<p>Effective {{ fee.effective }}</p>{% endif %}
+                {% if fee.history|length > 1 %}
+                <details class="property-fee-history">
+                  <summary>View history ({{ fee.history|length }} records)</summary>
+                  <ul>
+                    {% for historical in fee.history %}
+                    <li><strong>{{ historical.amount or '—' }}</strong> · {{ historical.effective or 'No effective date' }} – {{ historical.end or 'Open' }} · {{ historical.status or 'Unknown status' }}</li>
+                    {% endfor %}
+                  </ul>
+                </details>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </section>
+        {% endif %}
       </div>
     </article>
     {% endfor %}
