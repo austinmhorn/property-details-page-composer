@@ -133,29 +133,28 @@
           <h3>Fees &amp; Deposits</h3>
           {% for category in dynamic_fees %}
           <div class="property-fee-category">
-            <h4>{{ category.name }}</h4>
+
             {% for group in category.groups %}
             <div class="property-fee-group">
-              <h5>{{ group.name }}</h5>
+
               {% for fee in group.fees %}
+              {% if fee.state != 'noncurrent' %}
               <div class="property-fee-item">
                 <div class="property-fee-item__heading">
                   <span class="property-fee-item__name">{{ fee.label }}</span>
-                  {% if fee.state == 'current' %}<strong>{{ fee.amount }}</strong>
-                  {% elif fee.state == 'unresolved' %}<strong class="property-fee-status property-fee-status--unresolved">Requires review</strong>
-                  {% else %}<strong class="property-fee-status">No current fee</strong>{% endif %}
+                  {% if fee.state == 'current' %}<strong class="property-fee-item__value">{{ fee.amount or fee.variant or 'Amount not specified' }}</strong>
+                  {% else %}<strong class="property-fee-status property-fee-status--unresolved">Requires review</strong>{% endif %}
                 </div>
                 {% if fee.history %}
                 <details class="property-fee-history">
                   <summary>View fee details ({{ fee.history|length }})</summary>
-                  {% if fee.variant %}<p class="property-fee-history__variant">Frequency: {{ fee.variant }}</p>{% endif %}
                   <div class="property-fee-history__table-wrap">
                     <table class="property-fee-history__table">
                       <thead><tr><th scope="col">Amount</th><th scope="col">Effective period</th><th scope="col">Status</th></tr></thead>
                       <tbody>
                         {% for historical in fee.history %}
                         <tr>
-                          <td class="property-fee-history__amount">{{ historical.amount or '—' }}</td>
+                          <td class="property-fee-history__amount">{{ historical.amount or fee.variant or '—' }}</td>
                           <td class="property-fee-history__period">
                             <span>{{ historical.effective or 'Not specified' }}</span>
                             {% if historical.end %}<span class="property-fee-history__arrow" aria-label="through">→</span><span>{{ historical.end }}</span>{% else %}<span class="property-fee-history__ongoing">Ongoing</span>{% endif %}
@@ -172,10 +171,11 @@
                 {% elif fee.state == 'current' and fee.effective %}
                 <details class="property-fee-history">
                   <summary>View fee details</summary>
-                  <div class="property-fee-history__single">{% if fee.variant %}Frequency: {{ fee.variant }} · {% endif %}Current fee effective {{ fee.effective }}</div>
+                  <div class="property-fee-history__single">Current fee effective {{ fee.effective }}</div>
                 </details>
                 {% endif %}
               </div>
+              {% endif %}
               {% endfor %}
             </div>
             {% endfor %}
