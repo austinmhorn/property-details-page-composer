@@ -6,6 +6,7 @@ using the verified property name carried by PDE's Property ID/name lookup.
 from __future__ import annotations
 
 import json
+import os
 from collections import defaultdict
 from pathlib import Path
 
@@ -15,10 +16,18 @@ from .property_data import _currency
 
 FEE_FILE = DATA_DIR / "property_fees.json"
 
+def fee_source() -> str:
+    """Explicit opt-in. An artifact alone never activates v3."""
+    source = os.getenv("COMPOSER_FEE_SOURCE", "legacy").strip().lower()
+    if source not in ("legacy", "v3"):
+        raise ValueError("COMPOSER_FEE_SOURCE must be 'legacy' or 'v3'")
+    return source
+
+
 
 def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
-    if not path.exists():
-        return {}
+    if not path.is_file():
+        raise FileNotFoundError(f"V3 fee artifact required: {path}")
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("version") != 3 or not isinstance(data.get("properties"), dict):
         raise ValueError("Unsupported PDE related fee artifact")
