@@ -93,7 +93,7 @@ def load_interact_field_metadata(
     with path.open("r", encoding="utf-8") as handle:
         payload = json.load(handle)
 
-    if payload.get("version") != 1:
+    if payload.get("version") not in (1, 2):
         raise RuntimeError(
             f"Unsupported property field metadata version in {path}"
         )
