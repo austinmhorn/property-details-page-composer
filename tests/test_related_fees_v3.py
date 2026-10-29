@@ -87,6 +87,41 @@ class RelatedFeesTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "checksum mismatch"):
                 verify_manifest(root)
 
+    def test_unresolved_and_historical_fees_remain_visible(self):
+        dataset = {
+            "version": 3,
+            "warnings": [{"type": "overlapping_active_fees",
+                          "property_id": "p1", "fee_key": "overlap"}],
+            "properties": {
+                "p1": {"property_name": "Avery", "fees": [
+                    {"fee_key": "overlap", "fee_type": "Reserved Parking",
+                     "variant": "Monthly", "current": None,
+                     "history": [{"id": "one", "name": "Reserved Parking",
+                                  "amount": "50", "category": "Add On",
+                                  "group": "Parking", "effective": "2025-01-01"},
+                                 {"id": "two", "name": "Reserved Parking",
+                                  "amount": "75", "category": "Add On",
+                                  "group": "Parking", "effective": "2026-01-01"}]},
+                    {"fee_key": "old", "fee_type": "Old Fee",
+                     "variant": "", "current": None,
+                     "history": [{"id": "old", "name": "Old Fee",
+                                  "amount": "10", "category": "Add On",
+                                  "group": "Other", "effective": "2024-01-01"}]}
+                ]}
+            }
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fees.json"
+            path.write_text(json.dumps(dataset))
+            categories = load_fee_sections(path)["avery"]
+        fees = [fee for category in categories for group in category["groups"]
+                for fee in group["fees"]]
+        by_name = {fee["label"]: fee for fee in fees}
+        self.assertEqual(by_name["Reserved Parking"]["state"], "unresolved")
+        self.assertIsNone(by_name["Reserved Parking"]["amount"])
+        self.assertEqual(by_name["Old Fee"]["state"], "noncurrent")
+        self.assertEqual(len(by_name["Old Fee"]["history"]), 1)
+
     def test_manifest_missing_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(FileNotFoundError):
