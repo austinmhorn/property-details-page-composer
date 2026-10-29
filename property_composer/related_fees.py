@@ -31,6 +31,11 @@ def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("version") != 3 or not isinstance(data.get("properties"), dict):
         raise ValueError("Unsupported PDE related fee artifact")
+    overlaps = {
+        (w.get("property_id"), w.get("fee_key"))
+        for w in data.get("warnings", [])
+        if w.get("type") == "overlapping_active_fees"
+    }
     names = {}
     for property_id, record in data["properties"].items():
         name = (record.get("property_name") or "").strip()
@@ -42,18 +47,21 @@ def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
         categories = defaultdict(lambda: defaultdict(list))
         for group in record.get("fees", []):
             current = group.get("current")
-            if not current:
-                continue  # Historical-only fees are not presented as current.
-            category = (current.get("category") or "Other Fees").strip()
-            family = (current.get("group") or group.get("fee_type") or "Other").strip()
-            history = sorted(group.get("history", []),
+            entries = group.get("history", [])
+            exemplar = current or (entries[-1] if entries else {})
+            category = (exemplar.get("category") or "Other Fees").strip()
+            family = (exemplar.get("group") or group.get("fee_type") or "Other").strip()
+            unresolved = (property_id, group.get("fee_key")) in overlaps
+            state = "current" if current else ("unresolved" if unresolved else "noncurrent")
+            history = sorted(entries,
                              key=lambda x: (x.get("effective") or "", x.get("id") or ""),
                              reverse=True)
             categories[category][family].append({
-                "label": group.get("fee_type") or current.get("name") or "Fee",
+                "label": group.get("fee_type") or exemplar.get("name") or "Fee",
                 "variant": group.get("variant") or "",
-                "amount": _currency(current.get("amount")),
-                "effective": current.get("effective"),
+                "state": state,
+                "amount": _currency(current.get("amount")) if current else None,
+                "effective": current.get("effective") if current else None,
                 "history": [{
                     "amount": _currency(item.get("amount")),
                     "effective": item.get("effective"),
