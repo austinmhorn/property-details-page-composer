@@ -7,6 +7,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from .related_fees import fee_source
+
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_DIR / "data"
@@ -36,6 +38,13 @@ def resolve_property_data_engine_dir() -> Path:
         candidates.append(
             Path(configured).expanduser()
         )
+
+    if fee_source() == "v3":
+        if not configured:
+            raise RuntimeError("V3 requires explicit PROPERTY_DATA_ENGINE_DIR")
+        if not candidates[0].is_dir() or not (candidates[0] / "start.sh").is_file():
+            raise FileNotFoundError("Configured v3 PDE checkout is invalid")
+        return candidates[0].resolve()
 
     candidates.extend(
         [
@@ -112,6 +121,13 @@ def sync_property_data_artifacts(
             + ", ".join(missing)
         )
 
+    source_fees = engine_dir / "property_fees.json"
+    if fee_source() == "v3":
+        if not source_fees.is_file():
+            raise FileNotFoundError(f"Missing mandatory v3 fee artifact: {source_fees}")
+        if source_fees.stat().st_mtime < source_csv.stat().st_mtime:
+            raise RuntimeError("V3 fee artifact predates property CSV")
+
     DATA_DIR.mkdir(
         parents=True,
         exist_ok=True,
@@ -136,7 +152,7 @@ def sync_property_data_artifacts(
     # Related fees are an optional v3 artifact. Production PDE v2 can
     # continue operating without this file during staged migration.
     source_fees = engine_dir / "property_fees.json"
-    if source_fees.is_file():
+    if fee_source() == "v3":
         shutil.copy2(source_fees, DATA_DIR / "property_fees.json")
     else:
         # Never display stale v3 fee data alongside a fresh v2 dataset.
