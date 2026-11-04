@@ -41,8 +41,8 @@ class DetailsRegressionTests(unittest.TestCase):
         from property_composer.property_data import SECTION_FIELDS
         expected = [
             "Quick Facts", "Property & Building Details",
-            "Property Team", "Contacts", "Leasing & Policies",
-            "Systems & Programs", "Portals & Resources", "Fees & Deposits",
+            "Property Team", "Contacts", "Portals & Resources",
+            "Systems & Programs", "Leasing & Policies", "Fees & Deposits",
         ]
         self.assertEqual(list(SECTION_FIELDS), expected)
         values = {"Property Name": "Baseline Community", "Prop No": "123"}
