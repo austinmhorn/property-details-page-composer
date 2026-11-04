@@ -45,12 +45,13 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Service Manager Email", "Customer Service Email", "Collateral Email",
         "Website Tracking Email", "Website Tracking Number", "Webex",
     ],
-    "Leasing & Policies": [
-        "Income Req.", "Late Fee Max", "Lease Terms",
-        "Resident Referral Maximum", "Unit Hold Times", "Units Displayed",
-        "Deposit Alt", "Get 100", "Housing Units / Max Limit Set",
-        "Reno Status",
-        "Renovation Strategy & Online Leasing Display", "Special Note",
+    "Portals & Resources": [
+        "Website", "Prospect Portal Link", "Resident Portal Link",
+        "Rental Criteria Link", "Community Information | Fee Sheet",
+        "Link to Summary", "PEP Page",
+        "ApartmentRatings.com", "ApartmentGuide Review", "Apartments.com Review",
+        "Facebook Review", "Google Review", "Facebook", "Instagram", "JTurner",
+        "Website Design Template",
     ],
     "Systems & Programs": [
         "AptLife", "Flex", "Spruce", "BlueMoon Exp.", "BlueMoon License ID",
@@ -60,13 +61,12 @@ SECTION_FIELDS: dict[str, list[str]] = {
         "Website Host", "LeaseLock", "LeaseLock Cost", "Housing Connector",
         "Zumper GBP",
     ],
-    "Portals & Resources": [
-        "Website", "Prospect Portal Link", "Resident Portal Link",
-        "Rental Criteria Link", "Community Information | Fee Sheet",
-        "Link to Summary", "PEP Page",
-        "ApartmentRatings.com", "ApartmentGuide Review", "Apartments.com Review",
-        "Facebook Review", "Google Review", "Facebook", "Instagram", "JTurner",
-        "Website Design Template",
+    "Leasing & Policies": [
+        "Income Req.", "Late Fee Max", "Lease Terms",
+        "Resident Referral Maximum", "Unit Hold Times", "Units Displayed",
+        "Deposit Alt", "Get 100", "Housing Units / Max Limit Set",
+        "Reno Status",
+        "Renovation Strategy & Online Leasing Display", "Special Note",
     ],
     "Fees & Deposits": [
     ],
