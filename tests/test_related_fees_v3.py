@@ -84,7 +84,7 @@ class RelatedFeesTests(unittest.TestCase):
         with patch("property_composer.renderer.fee_source", return_value="v3"), \
              patch("property_composer.renderer.verify_manifest"), \
              patch("property_composer.renderer.load_fee_sections",
-                   return_value={"northern cross": fees}), \\
+                   return_value={"northern cross": fees}), \
              patch("property_composer.renderer.load_interact_field_metadata",
                    return_value=({}, set())):
             html = render_portfolio([prop])
