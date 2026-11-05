@@ -132,8 +132,8 @@ class RelatedFeesTests(unittest.TestCase):
         by_label = {fee["label"]: fee for fee in fees}
         self.assertFalse(by_label["Hold Deposit"]["suppress"])
         self.assertEqual(by_label["Hold Deposit"]["amount_rows"], [
-            {"method": "At Move-In", "amount": "-$250.00"},
             {"method": "At Lease Approval", "amount": "$250.00"},
+            {"method": "At Move-In", "amount": "-$250.00"},
         ])
         self.assertEqual(len(by_label["Hold Deposit"]["history"]), 2)
         self.assertTrue(by_label["Parking Refund"]["suppress"])
@@ -192,6 +192,7 @@ class RelatedFeesTests(unittest.TestCase):
             html.count('class="property-fee-item__name">Hold Deposit'), 1)
         self.assertIn("At Move-In", html)
         self.assertIn("At Lease Approval", html)
+        self.assertLess(html.index("At Lease Approval"), html.index("At Move-In"))
         self.assertIn("-$200.00", html)
         self.assertIn("$200.00", html)
         self.assertIn("View fee details (2)", html)
