@@ -54,6 +54,25 @@ def _security_variant(variant: str) -> str | None:
     return None
 
 
+def _security_group_variant(group: dict) -> str | None:
+    """Resolve approved security variants from PDE's real fee type or variant.
+
+    Current records use fee_type 'Security Deposit (Standard)' or
+    'Security Deposit (Conditional)' with variant 'Move-In'. Older
+    records may use fee_type 'Security Deposit' and carry the approval
+    variant instead. Do not group unrelated fee types or infer variants
+    from an unrecognized name.
+    """
+    fee_type = (group.get("fee_type") or "").strip().casefold()
+    if fee_type == "security deposit (standard)":
+        return "Standard"
+    if fee_type == "security deposit (conditional)":
+        return "Conditional"
+    if fee_type == "security deposit":
+        return _security_variant(group.get("variant") or "")
+    return None
+
+
 def _security_deposit_card(groups: list[dict]) -> dict | None:
     """Combine approved Security Deposit variants into one display-only card.
 
@@ -64,7 +83,7 @@ def _security_deposit_card(groups: list[dict]) -> dict | None:
     history = []
     unresolved = False
     for group in groups:
-        variant = _security_variant(group.get("variant") or "")
+        variant = _security_group_variant(group)
         if variant is None:
             continue
         if group.get("_unresolved"):
@@ -254,8 +273,7 @@ def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
                 continue
             # Only the two known Security Deposit variants share a card.
             # Other variants remain independent and retain normal treatment.
-            if ((group.get("fee_type") or exemplar.get("name") or "").strip().casefold()
-                    == "security deposit" and _security_variant(group.get("variant") or "")):
+            if _security_group_variant(group):
                 security_category = category
                 security_groups.append({**group, "_unresolved": unresolved})
                 continue
