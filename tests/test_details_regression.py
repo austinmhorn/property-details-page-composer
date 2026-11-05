@@ -140,6 +140,90 @@ class DetailsRegressionTests(unittest.TestCase):
         self.assertNotIn("Example Holding Company", hidden_html)
         self.assertNotIn('data-property-column="Owning Entity"', hidden_html)
 
+    def test_blank_registered_value_still_renders_approved_label(self):
+        prop = Property({
+            "Property Name": "Baseline Community",
+            "Prop No": "123",
+            "Guest Parking Registration": "",
+        })
+        html = self.render([{
+            "csv_header": "Guest Parking Registration",
+            "display_in_interact": True,
+            "interact_category": "Portals & Resources",
+            "interact_label": "Guest Parking Registration",
+            "interact_details_order": 20,
+        }], [prop])
+        self.assertIn("Portals &amp; Resources", html)
+        self.assertIn("<dt>Guest Parking Registration</dt>", html)
+        self.assertIn("<dd>\n                —", html)
+
+    def test_blank_approved_value_does_not_become_fake_link(self):
+        prop = Property({
+            "Property Name": "Baseline Community",
+            "Prop No": "123",
+            "Parking Vendor Email": " ",
+            "Approved Charge": "",
+        })
+        html = self.render([
+            {
+                "csv_header": "Parking Vendor Email",
+                "display_in_interact": True,
+                "interact_category": "Contacts",
+                "interact_label": "Parking Vendor Email",
+            },
+            {
+                "csv_header": "Approved Charge",
+                "display_in_interact": True,
+                "interact_category": "Fees & Deposits",
+                "interact_label": "Approved Charge",
+                "extractor_type": "formula_number",
+            },
+        ], [prop])
+        self.assertIn("<dt>Parking Vendor Email</dt>", html)
+        self.assertIn("<dt>Approved Charge</dt>", html)
+        self.assertNotIn('href="mailto:"', html)
+        self.assertNotIn("$0.00", html)
+
+    def test_blank_hidden_or_absent_columns_stay_hidden(self):
+        prop = Property({
+            "Property Name": "Baseline Community",
+            "Prop No": "123",
+            "Private Field": "",
+        })
+        html = self.render([
+            {
+                "csv_header": "Private Field",
+                "display_in_interact": False,
+                "interact_category": "Contacts",
+                "interact_label": "Hidden Private Field",
+            },
+            {
+                "csv_header": "Missing Column",
+                "display_in_interact": True,
+                "interact_category": "Contacts",
+                "interact_label": "Missing Column",
+            },
+            {
+                "csv_header": "EIN",
+                "display_in_interact": True,
+                "interact_category": "Contacts",
+                "interact_label": "EIN",
+            },
+        ], [prop])
+        self.assertNotIn("Hidden Private Field", html)
+        self.assertNotIn("<dt>Missing Column</dt>", html)
+        self.assertNotIn("<dt>EIN</dt>", html)
+
+    def test_blank_legacy_field_renders_only_when_header_present(self):
+        prop = Property({
+            "Property Name": "Baseline Community",
+            "Prop No": "123",
+            "City": "",
+        })
+        html = self.render([], [prop])
+        self.assertIn("<dt>City</dt>", html)
+        self.assertNotIn("<dt>County</dt>", html)
+
     def test_other_protected_fields_remain_excluded(self):
         prop = Property({
             "Property Name": "Baseline Community",
