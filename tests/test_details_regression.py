@@ -247,7 +247,7 @@ class DetailsRegressionTests(unittest.TestCase):
         labels = ["Alpha Deposit", "Middle Fee", "Zebra Charge"]
         positions = [html.index("<dt>" + label + "</dt>") for label in labels]
         self.assertEqual(positions, sorted(positions))
-        self.assertRegex(html, r"<dt>Alpha Deposit</dt>\\s*<dd>\\s*—\\s*</dd>")
+        self.assertRegex(html, r"<dt>Alpha Deposit</dt>\s*<dd>\s*—\s*</dd>")
 
     def test_other_protected_fields_remain_excluded(self):
         prop = Property({
