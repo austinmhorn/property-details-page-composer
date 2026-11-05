@@ -100,62 +100,102 @@ class RelatedFeesTests(unittest.TestCase):
         self.assertIn("Requires review", html)
         self.assertIn("$95.00", html)
 
-    def test_security_deposit_standard_precedes_conditional_in_details(self):
+    def test_security_deposits_render_one_card_standard_above_conditional(self):
         from property_composer.property_data import Property
         from property_composer.related_fees import sort_display_fees
 
-        def fee(label, amount):
-            return {
-                "label": label, "state": "current", "suppress": False,
-                "amount": amount, "variant": "", "history": [],
-            }
-
-        # Deliberately unsorted, across distinct categories and groups.
-        visible = [
-            fee("Zebra Fee", "$5.00"),
-            fee("Security Deposit (Conditional)", "$1,000.00"),
-            fee("Application Fee", "$75.00"),
-            fee("Security Deposit (Standard)", "$550.00"),
-            fee("Pet Rent", "$25.00"),
-        ]
-        original_order = [item["label"] for item in visible]
-        expected = [
-            "Application Fee", "Pet Rent", "Security Deposit (Standard)",
-            "Security Deposit (Conditional)", "Zebra Fee",
-        ]
+        data = {"version": 3, "properties": {"p": {
+            "property_name": "Avery", "fees": [
+                {"fee_type": "Security Deposit", "variant": "Conditional Approval",
+                 "current": {"amount": "1000", "category": "Deposit",
+                             "group": "Security"},
+                 "history": [
+                     {"id": "c", "amount": "1000", "status": "Active",
+                      "effective": "2026-01-01"}]},
+                {"fee_type": "Security Deposit", "variant": "Standard Deposit",
+                 "current": {"amount": "550", "category": "Deposit",
+                             "group": "Security"},
+                 "history": [
+                     {"id": "s", "amount": "550", "status": "Active",
+                      "effective": "2026-01-01"}]},
+                {"fee_type": "Application Fee", "variant": "",
+                 "current": {"amount": "75", "category": "Other",
+                             "group": "Fees"}, "history": []},
+                {"fee_type": "Zebra Fee", "variant": "",
+                 "current": {"amount": "5", "category": "Other",
+                             "group": "Fees"}, "history": []},
+            ]
+        }}}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fees.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            sections = load_fee_sections(path)
+        cards = [fee for cat in sections["avery"]
+                 for group in cat["groups"] for fee in group["fees"]]
+        security = [fee for fee in cards if fee["label"] == "Security Deposit"]
+        self.assertEqual(len(security), 1)
+        self.assertEqual(security[0]["amount_rows"], [
+            {"method": "Standard", "amount": "$550.00"},
+            {"method": "Conditional", "amount": "$1,000.00"},
+        ])
+        self.assertEqual(len(security[0]["history"]), 2)
         self.assertEqual(
-            [item["label"] for item in sort_display_fees(visible)], expected
+            {entry["billing_method"] for entry in security[0]["history"]},
+            {"Standard", "Conditional"},
         )
+        # Sorting the presentation doesn't reorder or change the source cards.
+        labels = [fee["label"] for fee in cards]
         self.assertEqual(
-            [item["label"] for item in visible], original_order,
-            "Presentation sorting must not mutate source fee records",
+            [fee["label"] for fee in sort_display_fees(cards)],
+            ["Application Fee", "Security Deposit", "Zebra Fee"],
         )
-
-        sections = [
-            {"name": "Deposit", "groups": [
-                {"name": "Conditional", "fees": [visible[1]]},
-                {"name": "Standard", "fees": [visible[3]]},
-            ]},
-            {"name": "Other", "groups": [
-                {"name": "Fees", "fees": [visible[0], visible[2], visible[4]]},
-            ]},
-        ]
+        self.assertEqual([fee["label"] for fee in cards], labels)
         with (
             patch("property_composer.renderer.fee_source", return_value="v3"),
             patch("property_composer.renderer.verify_manifest"),
             patch("property_composer.renderer.load_fee_sections",
-                  return_value={"avery": sections}),
+                  return_value=sections),
             patch("property_composer.renderer.load_interact_field_metadata",
                   return_value=({}, set())),
         ):
             html = render_portfolio([
                 Property({"Property Name": "Avery", "Prop No": "123"})
             ])
-        marker = 'class="property-fee-item__name">'
-        positions = [html.index(marker + label) for label in expected]
-        self.assertEqual(positions, sorted(positions))
+        self.assertEqual(
+            html.count('class="property-fee-item__name">Security Deposit'), 1)
+        self.assertLess(html.index(">Standard</span>"), html.index(">Conditional</span>"))
+        self.assertIn("View fee details (2)", html)
+        self.assertIn(">Variant</th>", html)
         self.assertIn("$550.00", html)
         self.assertIn("$1,000.00", html)
+        self.assertLess(
+            html.index('class="property-fee-item__name">Application Fee'),
+            html.index('class="property-fee-item__name">Security Deposit'),
+        )
+        self.assertLess(
+            html.index('class="property-fee-item__name">Security Deposit'),
+            html.index('class="property-fee-item__name">Zebra Fee'),
+        )
+
+    def test_unresolved_security_variant_is_not_assigned_an_arbitrary_amount(self):
+        from property_composer.related_fees import _security_deposit_card
+        card = _security_deposit_card([
+            {"variant": "Standard Deposit",
+             "current": {"amount": "550"}, "history": [],
+             "_unresolved": True},
+            {"variant": "Conditional Approval",
+             "current": {"amount": "1000"}, "history": []},
+        ])
+        self.assertEqual(card["state"], "unresolved")
+        self.assertEqual(card["amount_rows"], [])
+        duplicate = _security_deposit_card([
+            {"variant": "Standard Deposit",
+             "current": {"amount": "550"}, "history": []},
+            {"variant": "Standard Deposit",
+             "current": {"amount": "600"}, "history": []},
+        ])
+        self.assertEqual(duplicate["state"], "unresolved")
+        self.assertEqual(duplicate["amount_rows"], [])
 
     def test_negative_current_fee_suppressed_and_security_deposits_distinguished(self):
         dataset = {"version": 3, "properties": {"p": {"property_name": "Avery", "fees": [
@@ -195,9 +235,12 @@ class RelatedFeesTests(unittest.TestCase):
         self.assertEqual(len(by_label["Hold Deposit"]["history"]), 2)
         self.assertTrue(by_label["Parking Refund"]["suppress"])
         self.assertEqual(by_label["Parking Refund"]["history"], [])
-        self.assertFalse(by_label["Security Deposit (Standard)"]["suppress"])
-        self.assertFalse(by_label["Security Deposit (Conditional)"]["suppress"])
-        self.assertEqual(len(by_label["Security Deposit (Conditional)"]["history"]), 1)
+        self.assertIn("Security Deposit", by_label)
+        self.assertEqual(by_label["Security Deposit"]["amount_rows"], [
+            {"method": "Standard", "amount": "$500.00"},
+            {"method": "Conditional", "amount": "$1,000.00"},
+        ])
+        self.assertEqual(len(by_label["Security Deposit"]["history"]), 2)
 
     def test_hold_deposit_is_one_card_with_both_billing_methods_in_html(self):
         from property_composer.property_data import Property
