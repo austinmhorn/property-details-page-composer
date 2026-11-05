@@ -179,10 +179,10 @@ class RelatedFeesTests(unittest.TestCase):
         cards = [fee for section in sections["avery"]
                  for group in section["groups"] for fee in group["fees"]]
         self.assertEqual([fee["label"] for fee in cards].count("Hold Deposit"), 1)
-        with patch("property_composer.renderer.fee_source", return_value="v3"), \\
-             patch("property_composer.renderer.verify_manifest"), \\
+        with patch("property_composer.renderer.fee_source", return_value="v3"), \
+             patch("property_composer.renderer.verify_manifest"), \
              patch("property_composer.renderer.load_fee_sections",
-                   return_value=sections), \\
+                   return_value=sections), \
              patch("property_composer.renderer.load_interact_field_metadata",
                    return_value=({}, set())):
             html = render_portfolio([
