@@ -149,7 +149,16 @@
               <div class="property-fee-item">
                 <div class="property-fee-item__heading">
                   <span class="property-fee-item__name">{{ fee.label }}</span>
-                  {% if fee.state == 'current' %}<strong class="property-fee-item__value">{{ fee.amount or fee.variant or 'Amount not specified' }}</strong>
+                  {% if fee.state == 'current' and fee.hold_deposit %}
+                  <div class="property-fee-item__amount-list" aria-label="Hold Deposit amounts by billing method">
+                    {% for amount_row in fee.amount_rows %}
+                    <div class="property-fee-item__amount-row">
+                      <span class="property-fee-item__billing-method">{{ amount_row.method }}</span>
+                      <strong class="property-fee-item__value">{{ amount_row.amount }}</strong>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% elif fee.state == 'current' %}<strong class="property-fee-item__value">{{ fee.amount or fee.variant or 'Amount not specified' }}</strong>
                   {% else %}<strong class="property-fee-status property-fee-status--unresolved">Requires review</strong>{% endif %}
                 </div>
                 {% if fee.history %}
@@ -157,10 +166,11 @@
                   <summary>View fee details ({{ fee.history|length }})</summary>
                   <div class="property-fee-history__table-wrap">
                     <table class="property-fee-history__table">
-                      <thead><tr><th scope="col">Amount</th><th scope="col">Effective period</th><th scope="col">Status</th></tr></thead>
+                      <thead><tr>{% if fee.hold_deposit %}<th scope="col">Billing method</th>{% endif %}<th scope="col">Amount</th><th scope="col">Effective period</th><th scope="col">Status</th></tr></thead>
                       <tbody>
                         {% for historical in fee.history %}
                         <tr>
+                          {% if fee.hold_deposit %}<td>{{ historical.billing_method or '—' }}</td>{% endif %}
                           <td class="property-fee-history__amount">{{ historical.amount or fee.variant or '—' }}</td>
                           <td class="property-fee-history__period">
                             <span>{{ historical.effective or 'Not specified' }}</span>
