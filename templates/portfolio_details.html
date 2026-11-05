@@ -143,7 +143,7 @@
               {% endfor %}
             {% endfor %}
           {% endfor %}
-          {% for fee in visible_fees.items|sort(attribute='label') %}
+          {% for fee in sort_display_fees(visible_fees.items) %}
           <div class="property-fee-category">
             <div class="property-fee-group">
               <div class="property-fee-item">
