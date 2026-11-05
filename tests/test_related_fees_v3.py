@@ -81,8 +81,8 @@ class RelatedFeesTests(unittest.TestCase):
             ],
         }]
         prop = Property({"Property Name": "Northern Cross", "Prop No": "123"})
-        with patch("property_composer.renderer.fee_source", return_value="v3"), \\
-             patch("property_composer.renderer.verify_manifest"), \\
+        with patch("property_composer.renderer.fee_source", return_value="v3"), \
+             patch("property_composer.renderer.verify_manifest"), \
              patch("property_composer.renderer.load_fee_sections",
                    return_value={"northern cross": fees}), \\
              patch("property_composer.renderer.load_interact_field_metadata",
