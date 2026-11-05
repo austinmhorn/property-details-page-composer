@@ -155,7 +155,7 @@ class DetailsRegressionTests(unittest.TestCase):
         }], [prop])
         self.assertIn("Portals &amp; Resources", html)
         self.assertIn("<dt>Guest Parking Registration</dt>", html)
-        self.assertRegex(html, r"<dt>Guest Parking Registration</dt>\\s*<dd>\\s*—\\s*</dd>")
+        self.assertRegex(html, r"<dt>Guest Parking Registration</dt>\s*<dd>\s*—\s*</dd>")
 
     def test_blank_approved_value_does_not_become_fake_link(self):
         prop = Property({
