@@ -39,6 +39,77 @@ def _security_deposit_label(name: str, variant: str) -> str:
     return name
 
 
+
+def sort_display_fees(fees: list[dict]) -> list[dict]:
+    """Alphabetize displayed fee cards without changing their source order."""
+    return sorted(fees, key=lambda fee: str(fee["label"]).casefold())
+
+
+def _security_variant(variant: str) -> str | None:
+    label = (variant or "").casefold()
+    if "standard" in label:
+        return "Standard"
+    if "conditional" in label:
+        return "Conditional"
+    return None
+
+
+def _security_deposit_card(groups: list[dict]) -> dict | None:
+    """Combine approved Security Deposit variants into one display-only card.
+
+    Keep the underlying PDE entries separate and preserve variant-specific
+    histories. Conflicting or duplicate current variants require review.
+    """
+    amounts: dict[str, list[dict]] = {"Standard": [], "Conditional": []}
+    history = []
+    unresolved = False
+    for group in groups:
+        variant = _security_variant(group.get("variant") or "")
+        if variant is None:
+            continue
+        if group.get("_unresolved"):
+            unresolved = True
+        current = group.get("current")
+        if current is not None:
+            if _negative_amount(current.get("amount")) or current.get("amount") is None:
+                unresolved = True
+            else:
+                amounts[variant].append(current)
+        for item in group.get("history", []):
+            if _negative_amount(item.get("amount")):
+                continue
+            history.append({
+                "billing_method": variant,
+                "amount": _currency(item.get("amount")),
+                "effective": item.get("effective"),
+                "end": item.get("end"),
+                "status": item.get("status"),
+            })
+    if not any(amounts.values()) and not unresolved:
+        return None
+    if any(len(values) > 1 for values in amounts.values()):
+        unresolved = True
+    rows = []
+    if not unresolved:
+        for variant in ("Standard", "Conditional"):
+            if amounts[variant]:
+                rows.append({
+                    "method": variant,
+                    "amount": _currency(amounts[variant][0]["amount"]),
+                })
+    return {
+        "label": "Security Deposit",
+        "state": "unresolved" if unresolved else "current",
+        "suppress": False,
+        "variant": "",
+        "amount": None,
+        "amount_rows": rows,
+        "effective": None,
+        "history": sorted(history, key=lambda item: item["effective"] or "", reverse=True),
+        "security_deposit": True,
+    }
+
+
 def _hold_method(record: dict, variant: str = "") -> str | None:
     """Translate only the two approved Hold Deposit billing methods."""
     value = (record.get("billing_method") or variant or "").strip().casefold()
@@ -166,6 +237,8 @@ def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
         categories = defaultdict(lambda: defaultdict(list))
         hold_groups = []
         hold_category = "Deposit"
+        security_groups = []
+        security_category = "Deposit"
         for group in record.get("fees", []):
             current = group.get("current")
             entries = group.get("history", [])
@@ -178,6 +251,13 @@ def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
             if (group.get("fee_type") or exemplar.get("name") or "").strip().casefold() == "hold deposit":
                 hold_category = category
                 hold_groups.append({**group, "_unresolved": unresolved})
+                continue
+            # Only the two known Security Deposit variants share a card.
+            # Other variants remain independent and retain normal treatment.
+            if ((group.get("fee_type") or exemplar.get("name") or "").strip().casefold()
+                    == "security deposit" and _security_variant(group.get("variant") or "")):
+                security_category = category
+                security_groups.append({**group, "_unresolved": unresolved})
                 continue
             state = "current" if current else ("unresolved" if unresolved else "noncurrent")
             history = sorted((item for item in entries if not _negative_amount(item.get("amount"))),
@@ -201,6 +281,10 @@ def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
             hold_card = _hold_deposit_card(hold_groups, as_of)
             if hold_card is not None:
                 categories[hold_category]["Hold Deposit"].append(hold_card)
+        if security_groups:
+            security_card = _security_deposit_card(security_groups)
+            if security_card is not None:
+                categories[security_category]["Security Deposit"].append(security_card)
         names[key] = [
             {"name": category,
              "groups": [{"name": family,

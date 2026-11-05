@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from .config import OUTPUT_DIR, TEMPLATE_DIR, ensure_runtime_dirs
 from .property_data import Property, load_interact_field_metadata, _currency
-from .related_fees import load_fee_sections, fee_source
+from .related_fees import load_fee_sections, fee_source, sort_display_fees
 from .artifact_manifest import verify_manifest
 from .config import DATA_DIR
 
@@ -100,6 +100,7 @@ def render_portfolio(
         table_columns=_table_columns(interact_fields, managed_headers),
         format_currency=_currency,
         fee_sections=fee_sections,
+        sort_display_fees=sort_display_fees,
     )
 
 

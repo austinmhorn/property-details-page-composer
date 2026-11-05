@@ -143,14 +143,14 @@
               {% endfor %}
             {% endfor %}
           {% endfor %}
-          {% for fee in visible_fees.items|sort(attribute='label') %}
+          {% for fee in sort_display_fees(visible_fees.items) %}
           <div class="property-fee-category">
             <div class="property-fee-group">
               <div class="property-fee-item">
                 <div class="property-fee-item__heading">
                   <span class="property-fee-item__name">{{ fee.label }}</span>
-                  {% if fee.state == 'current' and fee.hold_deposit %}
-                  <div class="property-fee-item__amount-list" aria-label="Hold Deposit amounts by billing method">
+                  {% if fee.state == 'current' and fee.amount_rows %}
+                  <div class="property-fee-item__amount-list" aria-label="{{ fee.label }} amounts by method">
                     {% for amount_row in fee.amount_rows %}
                     <div class="property-fee-item__amount-row">
                       <span class="property-fee-item__billing-method">{{ amount_row.method }}</span>
@@ -166,11 +166,11 @@
                   <summary>View fee details ({{ fee.history|length }})</summary>
                   <div class="property-fee-history__table-wrap">
                     <table class="property-fee-history__table">
-                      <thead><tr>{% if fee.hold_deposit %}<th scope="col">Billing method</th>{% endif %}<th scope="col">Amount</th><th scope="col">Effective period</th><th scope="col">Status</th></tr></thead>
+                      <thead><tr>{% if fee.hold_deposit or fee.security_deposit %}<th scope="col">{{ "Variant" if fee.security_deposit else "Billing method" }}</th>{% endif %}<th scope="col">Amount</th><th scope="col">Effective period</th><th scope="col">Status</th></tr></thead>
                       <tbody>
                         {% for historical in fee.history %}
                         <tr>
-                          {% if fee.hold_deposit %}<td>{{ historical.billing_method or '—' }}</td>{% endif %}
+                          {% if fee.hold_deposit or fee.security_deposit %}<td>{{ historical.billing_method or '—' }}</td>{% endif %}
                           <td class="property-fee-history__amount">{{ historical.amount or fee.variant or '—' }}</td>
                           <td class="property-fee-history__period">
                             <span>{{ historical.effective or 'Not specified' }}</span>
