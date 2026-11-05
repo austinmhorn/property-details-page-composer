@@ -148,7 +148,8 @@ def load_fee_sections(path: Path = FEE_FILE) -> dict[str, list[dict]]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("version") != 3 or not isinstance(data.get("properties"), dict):
         raise ValueError("Unsupported PDE related fee artifact")
-    as_of = date.fromisoformat(data["as_of"])
+    # Production PDE v3 artifacts include as_of. Older test fixtures may not.
+    as_of = date.fromisoformat(data["as_of"]) if data.get("as_of") else date.today()
     overlaps = {
         (w.get("property_id"), w.get("fee_key"))
         for w in data.get("warnings", [])
