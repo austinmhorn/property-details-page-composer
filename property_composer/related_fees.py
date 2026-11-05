@@ -114,7 +114,7 @@ def _hold_deposit_card(groups: list[dict], as_of: date) -> dict | None:
         unresolved = True
     ordered = []
     if not unresolved:
-        for method in ("At Move-In", "At Lease Approval"):
+        for method in ("At Lease Approval", "At Move-In"):
             if rows[method]:
                 ordered.append({
                     "method": method,
