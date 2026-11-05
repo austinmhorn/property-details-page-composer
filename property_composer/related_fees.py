@@ -39,6 +39,24 @@ def _security_deposit_label(name: str, variant: str) -> str:
     return name
 
 
+
+def sort_display_fees(fees: list[dict]) -> list[dict]:
+    """Alphabetize visible cards, with Standard before Conditional deposits.
+
+    Keep both Security Deposit variants in their normal alphabetic position
+    among other fees. Do not alter source fee groups or historical entries.
+    """
+    def key(fee: dict) -> tuple[str, int, str]:
+        label = str(fee["label"]).strip().casefold()
+        if label == "security deposit (standard)":
+            return ("security deposit", 0, label)
+        if label == "security deposit (conditional)":
+            return ("security deposit", 1, label)
+        return (label, 2, label)
+
+    return sorted(fees, key=key)
+
+
 def _hold_method(record: dict, variant: str = "") -> str | None:
     """Translate only the two approved Hold Deposit billing methods."""
     value = (record.get("billing_method") or variant or "").strip().casefold()
