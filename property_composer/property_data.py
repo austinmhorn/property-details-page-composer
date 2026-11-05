@@ -281,26 +281,31 @@ class Property:
                 if label in managed_headers:
                     continue
 
-                value = self.get(label)
+                # Render approved legacy fields when their CSV column exists,
+                # even if this property's value is blank. Do not fabricate
+                # fields that are absent from the source schema.
+                if label not in self.raw:
+                    continue
 
-                if value:
-                    details.append({
-                        "label": label,
-                        "value": value,
-                        "kind": _kind(label, value),
-                    })
+                value = self.get(label)
+                details.append({
+                    "label": label,
+                    "value": value,
+                    "kind": _kind(label, value) if value else "text",
+                })
 
             section_details[section_name] = details
 
         dynamic_by_category: dict[str, list[tuple[int, dict[str, object]]]] = {}
 
         for header, metadata in interact_fields.items():
-            value = self.get(header)
-
-            if not value:
+            # A blank cell is still a visible, approved field; a missing CSV
+            # header is a schema mismatch and should not create fake data.
+            if header not in self.raw:
                 continue
 
-            if metadata.currency:
+            value = self.get(header)
+            if metadata.currency and value:
                 value = _currency(value)
 
             dynamic_by_category.setdefault(
@@ -312,7 +317,7 @@ class Property:
                     {
                         "label": metadata.label,
                         "value": value,
-                        "kind": _kind(metadata.label, value),
+                        "kind": _kind(metadata.label, value) if value else "text",
                     },
                 )
             )

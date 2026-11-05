@@ -193,7 +193,7 @@ The Page Composer HTML fragment intentionally contains no embedded styling or ap
 ## Data behavior
 
 - Property Data Engine is the canonical source of property data.
-- Blank values are omitted.
+- Blank values for approved Details fields present in the source CSV render as `—`; missing CSV columns and registry-hidden fields remain excluded. The Table view also displays `—` for blank values.
 - URLs, emails, and phone-like values render as usable links.
 - Known core fields are grouped into onsite-friendly sections.
 - Registry-managed fields obey Property Data Engine's Interact metadata.
