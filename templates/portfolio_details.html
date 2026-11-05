@@ -131,14 +131,21 @@
         {% if dynamic_fees %}
         <section class="property-section property-fees-section" aria-label="Current fees and fee history">
           <h3>Fees &amp; Deposits</h3>
+          {# Grouping remains in the PDE data, but the Details panel does not
+             show group headings. Sort the visible fee cards across groups. #}
+          {% set visible_fees = namespace(items=[]) %}
           {% for category in dynamic_fees %}
-          <div class="property-fee-category">
-
             {% for group in category.groups %}
-            <div class="property-fee-group">
-
               {% for fee in group.fees %}
-              {% if fee.state != 'noncurrent' and not fee.suppress %}
+                {% if fee.state != 'noncurrent' and not fee.suppress %}
+                  {% set visible_fees.items = visible_fees.items + [fee] %}
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+          {% for fee in visible_fees.items|sort(attribute='label') %}
+          <div class="property-fee-category">
+            <div class="property-fee-group">
               <div class="property-fee-item">
                 <div class="property-fee-item__heading">
                   <span class="property-fee-item__name">{{ fee.label }}</span>
@@ -175,10 +182,7 @@
                 </details>
                 {% endif %}
               </div>
-              {% endif %}
-              {% endfor %}
             </div>
-            {% endfor %}
           </div>
           {% endfor %}
         </section>

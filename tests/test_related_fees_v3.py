@@ -46,6 +46,60 @@ class RelatedFeesTests(unittest.TestCase):
         self.assertEqual(len(detached["history"]), 2)
 
 
+    def test_details_fees_are_alphabetical_across_groups(self):
+        from property_composer.property_data import Property
+        from unittest.mock import patch
+
+        # Category and group order intentionally contradict fee label order.
+        fees = [{
+            "name": "Add On",
+            "groups": [
+                {"name": "Garage", "fees": [
+                    {"label": "Zebra Garage", "state": "current", "suppress": False,
+                     "amount": "$95.00", "variant": "", "history": []},
+                    {"label": "Dormant Garage", "state": "noncurrent", "suppress": False,
+                     "amount": None, "variant": "", "history": []},
+                ]},
+                {"name": "Parking", "fees": [
+                    {"label": "Alpha Parking", "state": "current", "suppress": False,
+                     "amount": "$50.00", "variant": "", "history": [{
+                         "amount": "$45.00", "effective": "2025-01-01",
+                         "end": None, "status": "Inactive"
+                     }]},
+                ]},
+            ],
+        }, {
+            "name": "Deposits", "groups": [
+                {"name": "Deposits", "fees": [
+                    {"label": "Middle Deposit", "state": "unresolved",
+                     "suppress": False, "amount": None, "variant": "",
+                     "history": []},
+                    {"label": "Excluded Deposit", "state": "current",
+                     "suppress": True, "amount": "$10.00", "variant": "",
+                     "history": []},
+                ]}
+            ],
+        }]
+        prop = Property({"Property Name": "Northern Cross", "Prop No": "123"})
+        with patch("property_composer.renderer.fee_source", return_value="v3"), \
+             patch("property_composer.renderer.verify_manifest"), \
+             patch("property_composer.renderer.load_fee_sections",
+                   return_value={"northern cross": fees}), \
+             patch("property_composer.renderer.load_interact_field_metadata",
+                   return_value=({}, set())):
+            html = render_portfolio([prop])
+        marker = 'class="property-fee-item__name">'
+        labels = [
+            "Alpha Parking", "Middle Deposit", "Zebra Garage"
+        ]
+        positions = [html.index(marker + label) for label in labels]
+        self.assertEqual(positions, sorted(positions))
+        self.assertNotIn(marker + "Dormant Garage", html)
+        self.assertNotIn(marker + "Excluded Deposit", html)
+        self.assertIn("View fee details (1)", html)
+        self.assertIn("Requires review", html)
+        self.assertIn("$95.00", html)
+
     def test_negative_current_fee_suppressed_and_security_deposits_distinguished(self):
         dataset = {"version": 3, "properties": {"p": {"property_name": "Avery", "fees": [
             {"fee_type": "Hold Deposit", "variant": "Setup", "current": {

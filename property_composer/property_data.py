@@ -357,6 +357,11 @@ class Property:
                 [],
             )
 
+            # The legacy registry-backed Fees & Deposits fallback should
+            # match the alphabetical presentation of v3 related fees.
+            if section_name == "Fees & Deposits":
+                details.sort(key=lambda detail: str(detail["label"]).casefold())
+
             if details:
                 sections.append({
                     "name": section_name,

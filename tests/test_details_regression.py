@@ -224,6 +224,31 @@ class DetailsRegressionTests(unittest.TestCase):
         self.assertIn("<dt>City</dt>", html)
         self.assertNotIn("<dt>County</dt>", html)
 
+    def test_legacy_fees_alphabetical_ignores_registry_display_order(self):
+        prop = Property({
+            "Property Name": "Baseline Community",
+            "Prop No": "123",
+            "Zebra Charge": "15",
+            "Alpha Deposit": "",
+            "Middle Fee": "50",
+        })
+        fields = [
+            {"csv_header": "Zebra Charge", "display_in_interact": True,
+             "interact_category": "Fees & Deposits",
+             "interact_label": "Zebra Charge", "interact_details_order": 1},
+            {"csv_header": "Middle Fee", "display_in_interact": True,
+             "interact_category": "Fees & Deposits",
+             "interact_label": "Middle Fee", "interact_details_order": 2},
+            {"csv_header": "Alpha Deposit", "display_in_interact": True,
+             "interact_category": "Fees & Deposits",
+             "interact_label": "Alpha Deposit", "interact_details_order": 3},
+        ]
+        html = self.render(fields, [prop])
+        labels = ["Alpha Deposit", "Middle Fee", "Zebra Charge"]
+        positions = [html.index("<dt>" + label + "</dt>") for label in labels]
+        self.assertEqual(positions, sorted(positions))
+        self.assertRegex(html, r"<dt>Alpha Deposit</dt>\s*<dd>\s*—\s*</dd>")
+
     def test_other_protected_fields_remain_excluded(self):
         prop = Property({
             "Property Name": "Baseline Community",
