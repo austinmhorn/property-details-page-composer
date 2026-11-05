@@ -177,6 +177,75 @@ class RelatedFeesTests(unittest.TestCase):
             html.index('class="property-fee-item__name">Zebra Fee'),
         )
 
+    def test_real_pde_security_fee_types_group_into_one_card(self):
+        """Production PDE puts Standard/Conditional in fee_type, not Move-In."""
+        from property_composer.property_data import Property
+        from property_composer.related_fees import _security_group_variant
+
+        data = {"version": 3, "as_of": "2026-11-05", "properties": {
+            "exchange-id": {"property_name": "Exchange 7272", "fees": [
+                {"fee_type": "Security Deposit (Conditional)",
+                 "variant": "Move-In",
+                 "current": {"amount": "1000", "category": "Deposit",
+                             "group": "Security", "status": "Active"},
+                 "history": [{"id": "c", "amount": "1000",
+                              "status": "Active", "effective": "2026-07-09"}]},
+                {"fee_type": "Security Deposit (Standard)",
+                 "variant": "Move-In",
+                 "current": {"amount": "550", "category": "Deposit",
+                             "group": "Security", "status": "Active"},
+                 "history": [{"id": "s", "amount": "550",
+                              "status": "Active", "effective": "2026-07-09"}]},
+                {"fee_type": "Security Deposit",
+                 "variant": "Application Approval - Conditional Approval",
+                 "current": None, "history": []},
+                {"fee_type": "Security Deposit",
+                 "variant": "Application Approval - Standard Approval",
+                 "current": None, "history": []},
+                {"fee_type": "Application Fee", "variant": "Move-In",
+                 "current": {"amount": "75", "category": "Fee",
+                             "group": "Application"}, "history": []},
+            ]}
+        }}
+        self.assertEqual(_security_group_variant(data["properties"]["exchange-id"]["fees"][0]),
+                         "Conditional")
+        self.assertEqual(_security_group_variant(data["properties"]["exchange-id"]["fees"][1]),
+                         "Standard")
+        self.assertIsNone(_security_group_variant(data["properties"]["exchange-id"]["fees"][4]))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fees.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            sections = load_fee_sections(path)
+        cards = [fee for cat in sections["exchange 7272"]
+                 for group in cat["groups"] for fee in group["fees"]]
+        security = [fee for fee in cards if fee["label"] == "Security Deposit"]
+        self.assertEqual(len(security), 1)
+        self.assertFalse(any(fee["label"].startswith("Security Deposit (")
+                             for fee in cards))
+        self.assertEqual(security[0]["amount_rows"], [
+            {"method": "Standard", "amount": "$550.00"},
+            {"method": "Conditional", "amount": "$1,000.00"},
+        ])
+        self.assertEqual(len(security[0]["history"]), 2)
+        with (
+            patch("property_composer.renderer.fee_source", return_value="v3"),
+            patch("property_composer.renderer.verify_manifest"),
+            patch("property_composer.renderer.load_fee_sections",
+                  return_value=sections),
+            patch("property_composer.renderer.load_interact_field_metadata",
+                  return_value=({}, set())),
+        ):
+            html = render_portfolio([
+                Property({"Property Name": "Exchange 7272", "Prop No": "123"})
+            ])
+        self.assertEqual(
+            html.count('class="property-fee-item__name">Security Deposit'), 1)
+        self.assertNotIn('class="property-fee-item__name">Security Deposit (', html)
+        self.assertLess(html.index(">Standard</span>"), html.index(">Conditional</span>"))
+        self.assertIn("$550.00", html)
+        self.assertIn("$1,000.00", html)
+        self.assertIn("View fee details (2)", html)
+
     def test_unresolved_security_variant_is_not_assigned_an_arbitrary_amount(self):
         from property_composer.related_fees import _security_deposit_card
         card = _security_deposit_card([
