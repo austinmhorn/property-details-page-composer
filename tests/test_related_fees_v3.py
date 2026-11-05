@@ -100,6 +100,63 @@ class RelatedFeesTests(unittest.TestCase):
         self.assertIn("Requires review", html)
         self.assertIn("$95.00", html)
 
+    def test_security_deposit_standard_precedes_conditional_in_details(self):
+        from property_composer.property_data import Property
+        from property_composer.related_fees import sort_display_fees
+
+        def fee(label, amount):
+            return {
+                "label": label, "state": "current", "suppress": False,
+                "amount": amount, "variant": "", "history": [],
+            }
+
+        # Deliberately unsorted, across distinct categories and groups.
+        visible = [
+            fee("Zebra Fee", "$5.00"),
+            fee("Security Deposit (Conditional)", "$1,000.00"),
+            fee("Application Fee", "$75.00"),
+            fee("Security Deposit (Standard)", "$550.00"),
+            fee("Pet Rent", "$25.00"),
+        ]
+        original_order = [item["label"] for item in visible]
+        expected = [
+            "Application Fee", "Pet Rent", "Security Deposit (Standard)",
+            "Security Deposit (Conditional)", "Zebra Fee",
+        ]
+        self.assertEqual(
+            [item["label"] for item in sort_display_fees(visible)], expected
+        )
+        self.assertEqual(
+            [item["label"] for item in visible], original_order,
+            "Presentation sorting must not mutate source fee records",
+        )
+
+        sections = [
+            {"name": "Deposit", "groups": [
+                {"name": "Conditional", "fees": [visible[1]]},
+                {"name": "Standard", "fees": [visible[3]]},
+            ]},
+            {"name": "Other", "groups": [
+                {"name": "Fees", "fees": [visible[0], visible[2], visible[4]]},
+            ]},
+        ]
+        with (
+            patch("property_composer.renderer.fee_source", return_value="v3"),
+            patch("property_composer.renderer.verify_manifest"),
+            patch("property_composer.renderer.load_fee_sections",
+                  return_value={"avery": sections}),
+            patch("property_composer.renderer.load_interact_field_metadata",
+                  return_value=({}, set())),
+        ):
+            html = render_portfolio([
+                Property({"Property Name": "Avery", "Prop No": "123"})
+            ])
+        marker = 'class="property-fee-item__name">'
+        positions = [html.index(marker + label) for label in expected]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("$550.00", html)
+        self.assertIn("$1,000.00", html)
+
     def test_negative_current_fee_suppressed_and_security_deposits_distinguished(self):
         dataset = {"version": 3, "properties": {"p": {"property_name": "Avery", "fees": [
             {"fee_type": "Hold Deposit", "variant": "Move-In", "current": None,
