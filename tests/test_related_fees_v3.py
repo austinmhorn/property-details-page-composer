@@ -249,18 +249,18 @@ class RelatedFeesTests(unittest.TestCase):
     def test_unresolved_security_variant_is_not_assigned_an_arbitrary_amount(self):
         from property_composer.related_fees import _security_deposit_card
         card = _security_deposit_card([
-            {"variant": "Standard Deposit",
+            {"fee_type": "Security Deposit", "variant": "Standard Deposit",
              "current": {"amount": "550"}, "history": [],
              "_unresolved": True},
-            {"variant": "Conditional Approval",
+            {"fee_type": "Security Deposit", "variant": "Conditional Approval",
              "current": {"amount": "1000"}, "history": []},
         ])
         self.assertEqual(card["state"], "unresolved")
         self.assertEqual(card["amount_rows"], [])
         duplicate = _security_deposit_card([
-            {"variant": "Standard Deposit",
+            {"fee_type": "Security Deposit", "variant": "Standard Deposit",
              "current": {"amount": "550"}, "history": []},
-            {"variant": "Standard Deposit",
+            {"fee_type": "Security Deposit", "variant": "Standard Deposit",
              "current": {"amount": "600"}, "history": []},
         ])
         self.assertEqual(duplicate["state"], "unresolved")
