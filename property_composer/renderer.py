@@ -7,6 +7,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from .config import OUTPUT_DIR, TEMPLATE_DIR, ensure_runtime_dirs
 from .property_data import Property, load_interact_field_metadata, _currency
 from .related_fees import load_fee_sections, fee_source, sort_display_fees
+from .onsite_team import onsite_team_enabled, load_onsite_team
 from .artifact_manifest import verify_manifest
 from .config import DATA_DIR
 
@@ -90,6 +91,7 @@ def render_portfolio(
         fee_sections = load_fee_sections()
     else:
         fee_sections = {}
+    onsite_team = load_onsite_team() if onsite_team_enabled() else {}
     template = _environment().get_template("portfolio_details.html")
     return template.render(
         properties=properties,
@@ -100,6 +102,7 @@ def render_portfolio(
         table_columns=_table_columns(interact_fields, managed_headers),
         format_currency=_currency,
         fee_sections=fee_sections,
+        onsite_team=onsite_team,
         sort_display_fees=sort_display_fees,
     )
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from .related_fees import fee_source
+from .onsite_team import onsite_team_enabled
 from .artifact_manifest import verify_manifest, MANIFEST
 
 
@@ -130,6 +131,14 @@ def sync_property_data_artifacts(
         if source_fees.stat().st_mtime < source_csv.stat().st_mtime:
             raise RuntimeError("V3 fee artifact predates property CSV")
 
+    # The roster is an independent opt-in sidecar. Validate before copying
+    # any outputs so an incomplete update cannot silently publish stale staff.
+    source_onsite = engine_dir / "property_onsite_team.json"
+    if onsite_team_enabled() and not source_onsite.is_file():
+        raise FileNotFoundError(
+            f"Onsite team enabled but PDE artifact is missing: {source_onsite}"
+        )
+
     DATA_DIR.mkdir(
         parents=True,
         exist_ok=True,
@@ -162,6 +171,9 @@ def sync_property_data_artifacts(
         # Never display stale v3 fee data alongside a fresh v2 dataset.
         (DATA_DIR / "property_fees.json").unlink(missing_ok=True)
         (DATA_DIR / MANIFEST).unlink(missing_ok=True)
+
+    if onsite_team_enabled():
+        shutil.copy2(source_onsite, DATA_DIR / "property_onsite_team.json")
 
     print(
         "Synced Property Data Engine artifacts:"

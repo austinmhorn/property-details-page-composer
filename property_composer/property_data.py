@@ -265,6 +265,7 @@ class Property:
         self,
         interact_fields: dict[str, InteractField] | None = None,
         managed_headers: set[str] | None = None,
+        onsite_staff: list[dict[str, str]] | None = None,
     ) -> list[dict[str, object]]:
         interact_fields = interact_fields or {}
         managed_headers = managed_headers or set()
@@ -339,6 +340,17 @@ class Property:
                 detail
                 for _, detail in items
             )
+
+        # Related onsite associates follow the dedicated Property Manager,
+        # without changing existing registry fields or their display order.
+        if onsite_staff:
+            team = section_details.setdefault("Property Team", [])
+            pm_at = next(
+                (i for i, detail in enumerate(team)
+                 if str(detail["label"]).casefold() == "property manager"),
+                -1,
+            )
+            team[pm_at + 1:pm_at + 1] = onsite_staff
 
         # Only the eight supported sections are rendered. Unmanaged CSV columns
         # cannot silently create an unreviewed ninth Details pane.

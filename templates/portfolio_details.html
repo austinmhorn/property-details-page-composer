@@ -103,7 +103,7 @@
 
       <div class="property-sections">
         {% set dynamic_fees = fee_sections.get(property.name|lower, []) %}
-        {% for section in property.sections(interact_fields, managed_headers) %}
+        {% for section in property.sections(interact_fields, managed_headers, onsite_team.get(property.name|lower, [])) %}
         {% if not (dynamic_fees and section.name == 'Fees & Deposits') %}
         <section class="property-section">
           <h3>{{ section.name }}</h3>
