@@ -75,7 +75,7 @@ class OnsiteTeamTests(unittest.TestCase):
     def test_disabled_by_default_keeps_existing_details(self):
         with patch.dict("os.environ", {"COMPOSER_ONSITE_TEAM_ENABLED": "0"}):
             self.assertFalse(onsite_team_enabled())
-        with patch("property_composer.renderer.onsite_team_enabled", return_value=False), \\
+        with patch("property_composer.renderer.onsite_team_enabled", return_value=False), \
              patch("property_composer.renderer.load_onsite_team") as roster_load:
             html = render_portfolio([
                 Property({"Property Name": "Anthem Town East", "Prop No": "123"})
@@ -98,8 +98,8 @@ class OnsiteTeamTests(unittest.TestCase):
             path = Path(directory)
             (path / "notion_data.csv").write_text("Property Name\nExample\n")
             (path / "property_fields.json").write_text('{"version": 1}')
-            with patch.object(source, "onsite_team_enabled", return_value=True), \\
-                 patch.object(source, "fee_source", return_value="legacy"), \\
+            with patch.object(source, "onsite_team_enabled", return_value=True), \
+                 patch.object(source, "fee_source", return_value="legacy"), \
                  patch.object(source, "DATA_DIR", path / "composer_data"):
                 with self.assertRaisesRegex(FileNotFoundError, "Onsite team"):
                     source.sync_property_data_artifacts(path)
